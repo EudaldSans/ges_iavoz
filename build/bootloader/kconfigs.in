@@ -1,0 +1,5 @@
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/efuse/Kconfig"
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/esp32/Kconfig"
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/esp_common/Kconfig"
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/log/Kconfig"
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/spi_flash/Kconfig"

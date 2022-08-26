@@ -1,0 +1,71 @@
+menu "SIMON IAVOZ"
+    config IAVOZ_ENABLE
+        bool "Enable IAVOZ service"
+        default n
+
+    config IAVOZ_SYS_TASK_STACK_SIZE
+        depends on IAVOZ_ENABLE
+        int "Underlying IAVOZ system task stack size"
+        range 1024 32768
+        default 4096
+        help
+            The stack size of the IAVOZ's system management underlying task.
+		
+    config IAVOZ_SYS_TASK_PRIORITY
+        depends on IAVOZ_ENABLE
+        int "Underlying task priority"
+        range 3 25
+        default 5
+        help
+            The priority of the IAVOZ's system management underlying task.
+
+
+    config IAVOZ_MIC_TASK_STACK_SIZE
+        depends on IAVOZ_ENABLE
+        int "Underlying task stack size"
+        range 1024 32768
+        default 4096
+        help
+            The stack size of the microphone's management underlying task.
+		
+    config IAVOZ_MIC_TASK_PRIORITY
+        depends on IAVOZ_ENABLE
+        int "Underlying task priority"
+        range 3 25
+        default 5
+        help
+            The priority of the microphone's management underlying task.
+
+    config IAVOZ_MIC_I2S_NUM
+        depends on IAVOZ_ENABLE
+        int "I2S peripheral num"
+        range 0 1
+        default 1
+        help
+            The I2S peripheral to be used by the system.
+    
+    config IAVOZ_MIC_I2S_PIN_BCK
+        depends on IAVOZ_ENABLE
+        int "I2S clock pin"
+        range 0 40
+        default 26
+        help
+            The I2S pin used for clock signal.
+
+    config IAVOZ_MIC_I2S_PIN_WS
+        depends on IAVOZ_ENABLE
+        int "I2S word-select pin"
+        range 0 40
+        default 32
+        help
+            The I2S pin used for word-select signal.
+
+    config IAVOZ_MIC_I2S_PIN_DIN
+        depends on IAVOZ_ENABLE
+        int "I2S data pin"
+        range 0 40
+        default 33
+        help
+            The I2S pin used for data signal.
+
+endmenu

@@ -1,0 +1,6 @@
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/app_update/Kconfig.projbuild"
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/bootloader/Kconfig.projbuild"
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/esptool_py/Kconfig.projbuild"
+source "/Users/llmerlos/esp/env/v4.2/esp-idf/components/partition_table/Kconfig.projbuild"
+source "/Users/llmerlos/WS/work/simon/iavoz_simon/intpj/micro_speech/components/esp-nn/Kconfig.projbuild"
+source "/Users/llmerlos/WS/work/simon/iavoz_simon/intpj/micro_speech/components/ges_iavoz/Kconfig.projbuild"

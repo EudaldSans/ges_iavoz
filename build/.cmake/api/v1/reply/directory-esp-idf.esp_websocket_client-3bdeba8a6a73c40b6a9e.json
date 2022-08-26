@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "esp-idf/esp_websocket_client",
+		"source" : "/Users/llmerlos/esp/env/v4.2/esp-idf/components/esp_websocket_client"
+	}
+}
