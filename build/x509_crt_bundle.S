@@ -1,4 +1,4 @@
-/* * Data converted from /Users/llmerlos/WS/work/simon/iavoz_simon/intpj/micro_speech/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from /home/eudald/VAD/ges_iavoz/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 .section .rodata.embedded

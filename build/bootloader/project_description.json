@@ -1,20 +1,20 @@
 {
     "project_name":       "bootloader",
-    "project_path":       "/Users/llmerlos/esp/env/v4.2/esp-idf/components/bootloader/subproject",
-    "build_dir":          "/Users/llmerlos/WS/work/simon/iavoz_simon/intpj/micro_speech/build/bootloader",
-    "config_file":        "/Users/llmerlos/WS/work/simon/iavoz_simon/intpj/micro_speech/sdkconfig",
+    "project_path":       "/home/eudald/esp/esp-idf-4/components/bootloader/subproject",
+    "build_dir":          "/home/eudald/VAD/ges_iavoz/build/bootloader",
+    "config_file":        "/home/eudald/VAD/ges_iavoz/sdkconfig",
     "config_defaults":    "",
     "app_elf":            "bootloader.elf",
     "app_bin":            "bootloader.bin",
-    "git_revision":       "v4.2.3-110-g087c72e8ea-dirty",
+    "git_revision":       "v4.2.3",
     "target":             "esp32",
     "phy_data_partition": "",
     "monitor_baud" :      "115200",
     "monitor_toolprefix": "xtensa-esp32-elf-",
     "config_environment" : {
-        "COMPONENT_KCONFIGS" : "/Users/llmerlos/esp/env/v4.2/esp-idf/components/efuse/Kconfig;/Users/llmerlos/esp/env/v4.2/esp-idf/components/esp32/Kconfig;/Users/llmerlos/esp/env/v4.2/esp-idf/components/esp_common/Kconfig;/Users/llmerlos/esp/env/v4.2/esp-idf/components/log/Kconfig;/Users/llmerlos/esp/env/v4.2/esp-idf/components/spi_flash/Kconfig",
-        "COMPONENT_KCONFIGS_PROJBUILD" : "/Users/llmerlos/esp/env/v4.2/esp-idf/components/bootloader/Kconfig.projbuild;/Users/llmerlos/esp/env/v4.2/esp-idf/components/esptool_py/Kconfig.projbuild;/Users/llmerlos/esp/env/v4.2/esp-idf/components/partition_table/Kconfig.projbuild"
+        "COMPONENT_KCONFIGS" : "/home/eudald/esp/esp-idf-4/components/efuse/Kconfig;/home/eudald/esp/esp-idf-4/components/esp32/Kconfig;/home/eudald/esp/esp-idf-4/components/esp_common/Kconfig;/home/eudald/esp/esp-idf-4/components/log/Kconfig;/home/eudald/esp/esp-idf-4/components/spi_flash/Kconfig",
+        "COMPONENT_KCONFIGS_PROJBUILD" : "/home/eudald/esp/esp-idf-4/components/bootloader/Kconfig.projbuild;/home/eudald/esp/esp-idf-4/components/esptool_py/Kconfig.projbuild;/home/eudald/esp/esp-idf-4/components/partition_table/Kconfig.projbuild"
     },
     "build_components" : [ "bootloader", "bootloader_support", "efuse", "esp32", "esp_common", "esp_rom", "esptool_py", "log", "main", "micro-ecc", "partition_table", "soc", "spi_flash", "xtensa", "" ],
-    "build_component_paths" : [ "/Users/llmerlos/esp/env/v4.2/esp-idf/components/bootloader", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/bootloader_support", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/efuse", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/esp32", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/esp_common", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/esp_rom", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/esptool_py", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/log", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/bootloader/subproject/main", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/bootloader/subproject/components/micro-ecc", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/partition_table", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/soc", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/spi_flash", "/Users/llmerlos/esp/env/v4.2/esp-idf/components/xtensa", "" ]
+    "build_component_paths" : [ "/home/eudald/esp/esp-idf-4/components/bootloader", "/home/eudald/esp/esp-idf-4/components/bootloader_support", "/home/eudald/esp/esp-idf-4/components/efuse", "/home/eudald/esp/esp-idf-4/components/esp32", "/home/eudald/esp/esp-idf-4/components/esp_common", "/home/eudald/esp/esp-idf-4/components/esp_rom", "/home/eudald/esp/esp-idf-4/components/esptool_py", "/home/eudald/esp/esp-idf-4/components/log", "/home/eudald/esp/esp-idf-4/components/bootloader/subproject/main", "/home/eudald/esp/esp-idf-4/components/bootloader/subproject/components/micro-ecc", "/home/eudald/esp/esp-idf-4/components/partition_table", "/home/eudald/esp/esp-idf-4/components/soc", "/home/eudald/esp/esp-idf-4/components/spi_flash", "/home/eudald/esp/esp-idf-4/components/xtensa", "" ]
 }

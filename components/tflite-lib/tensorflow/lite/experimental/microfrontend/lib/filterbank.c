@@ -51,6 +51,7 @@ void FilterbankAccumulateChannels(struct FilterbankState* state,
     const int16_t* weights = state->weights + *channel_weight_starts;
     const int16_t* unweights = state->unweights + *channel_weight_starts++;
     const int width = *channel_widths++;
+
     int j;
     for (j = 0; j < width; ++j) {
       weight_accumulator += *weights++ * ((uint64_t)*magnitudes);

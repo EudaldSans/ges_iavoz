@@ -7608,46 +7608,6 @@
                                 "range": null,
                                 "title": "Place TWAI ISR function into IRAM",
                                 "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "IDF_TARGET_ESP32",
-                                "help": "When the bus-off condition is reached, the REC should be reset to 0 and frozen (via LOM) by the\ndriver's ISR. However on the ESP32, there is an edge case where the REC will increase before the\ndriver's ISR can respond in time (e.g., due to the rapid occurrence of bus errors), thus causing the\nREC to be non-zero after bus-off. A non-zero REC can prevent bus-off recovery as the bus-off recovery\ncondition is that both TEC and REC become 0. Enabling this option will add a workaround in the driver\nto forcibly reset REC to zero on reaching bus-off.",
-                                "id": "TWAI_ERRATA_FIX_BUS_OFF_REC",
-                                "name": "TWAI_ERRATA_FIX_BUS_OFF_REC",
-                                "range": null,
-                                "title": "Add SW workaround for REC change during bus-off",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "IDF_TARGET_ESP32",
-                                "help": "On the ESP32, when a transmit interrupt occurs, and interrupt register is read on the same APB clock\ncycle, the transmit interrupt could be lost. Enabling this option will add a workaround that checks the\ntransmit buffer status bit to recover any lost transmit interrupt.",
-                                "id": "TWAI_ERRATA_FIX_TX_INTR_LOST",
-                                "name": "TWAI_ERRATA_FIX_TX_INTR_LOST",
-                                "range": null,
-                                "title": "Add SW workaround for TX interrupt lost errata",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "IDF_TARGET_ESP32",
-                                "help": "On the ESP32, when receiving a data or remote frame, if a bus error occurs in the data or CRC field,\nthe data of the next received frame could be invalid. Enabling this option will add a workaround that\nwill reset the peripheral on detection of this errata condition. Note that if a frame is transmitted on\nthe bus whilst the reset is ongoing, the message will not be receive by the peripheral sent on the bus\nduring the reset, the message will be lost.",
-                                "id": "TWAI_ERRATA_FIX_RX_FRAME_INVALID",
-                                "name": "TWAI_ERRATA_FIX_RX_FRAME_INVALID",
-                                "range": null,
-                                "title": "Add SW workaround for invalid RX frame errata",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "IDF_TARGET_ESP32",
-                                "help": "On the ESP32, when the RX FIFO overruns and the RX message counter maxes out at 64 messages, the entire\nRX FIFO is no longer recoverable. Enabling this option will add a workaround that resets the peripheral\non detection of this errata condition. Note that if a frame is being sent on the bus during the reset\nbus during the reset, the message will be lost.",
-                                "id": "TWAI_ERRATA_FIX_RX_FIFO_CORRUPT",
-                                "name": "TWAI_ERRATA_FIX_RX_FIFO_CORRUPT",
-                                "range": null,
-                                "title": "Add SW workaround for RX FIFO corruption errata",
-                                "type": "bool"
                             }
                         ],
                         "depends_on": null,
@@ -8826,44 +8786,14 @@
                         "type": "choice"
                     },
                     {
-                        "children": [
-                            {
-                                "children": [],
-                                "depends_on": "<choice ESP32_RTC_EXT_CRYST_ADDIT_CURRENT_METHOD>",
-                                "help": null,
-                                "id": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT_NONE",
-                                "name": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT_NONE",
-                                "range": null,
-                                "title": "None",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice ESP32_RTC_EXT_CRYST_ADDIT_CURRENT_METHOD>",
-                                "help": null,
-                                "id": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT",
-                                "name": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT",
-                                "range": null,
-                                "title": "Method 1",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice ESP32_RTC_EXT_CRYST_ADDIT_CURRENT_METHOD>",
-                                "help": null,
-                                "id": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT_V2",
-                                "name": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT_V2",
-                                "range": null,
-                                "title": "Method 2",
-                                "type": "bool"
-                            }
-                        ],
-                        "depends_on": "ESP32_RTC_CLK_SRC_EXT_CRYS && ESP32_REV_MIN <= 1",
-                        "help": "With some 32kHz crystal configurations, the X32N and X32P pins may not have enough\ndrive strength to keep the crystal oscillating. Choose the method to provide\nadditional current from touchpad 9 to the external 32kHz crystal. Note that\nthe deep sleep current is slightly high (4-5uA) and the touchpad and the\nwakeup sources of both touchpad and ULP are not available in method 1 and method 2.\n\nThis problem is fixed in ESP32 ECO 3, so this workaround is not needed. Setting the\nproject configuration to minimum revision ECO3 will disable this option, , allow\nall wakeup sources, and save some code size.\n\n- \"None\" option will not provide additional current to external crystal\n- \"Method 1\" option can't ensure 100% to solve the external 32k crystal start failed\n  issue, but the touchpad can work in this method.\n- \"Method 2\" option can solve the external 32k issue, but the touchpad can't work\n  in this method.",
-                        "id": "component-config-esp32-specific-additional-current-for-external-32khz-crystal",
-                        "name": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT_METHOD",
+                        "children": [],
+                        "depends_on": "ESP32_RTC_CLK_SRC_EXT_CRYS",
+                        "help": "Choose which additional current is used for rtc external crystal.\n\n- With some 32kHz crystal configurations, the X32N and X32P pins may not\n  have enough drive strength to keep the crystal oscillating during deep sleep.\n  If this option is enabled, additional current from touchpad 9 is provided\n  internally to drive the 32kHz crystal. If this option is enabled, deep sleep current\n  is slightly higher (4-5uA) and the touchpad and ULP wakeup sources are not available.",
+                        "id": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT",
+                        "name": "ESP32_RTC_EXT_CRYST_ADDIT_CURRENT",
+                        "range": null,
                         "title": "Additional current for external 32kHz crystal",
-                        "type": "choice"
+                        "type": "bool"
                     },
                     {
                         "children": [],
@@ -11344,56 +11274,6 @@
                         ],
                         "title": "Modbus serial task priority",
                         "type": "int"
-                    },
-                    {
-                        "children": [
-                            {
-                                "children": [],
-                                "depends_on": "<choice FMB_PORT_TASK_AFFINITY>",
-                                "help": null,
-                                "id": "FMB_PORT_TASK_AFFINITY_NO_AFFINITY",
-                                "name": "FMB_PORT_TASK_AFFINITY_NO_AFFINITY",
-                                "range": null,
-                                "title": "No affinity",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice FMB_PORT_TASK_AFFINITY>",
-                                "help": null,
-                                "id": "FMB_PORT_TASK_AFFINITY_CPU0",
-                                "name": "FMB_PORT_TASK_AFFINITY_CPU0",
-                                "range": null,
-                                "title": "CPU0",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice FMB_PORT_TASK_AFFINITY>",
-                                "help": null,
-                                "id": "FMB_PORT_TASK_AFFINITY_CPU1",
-                                "name": "FMB_PORT_TASK_AFFINITY_CPU1",
-                                "range": null,
-                                "title": "CPU1",
-                                "type": "bool"
-                            }
-                        ],
-                        "depends_on": "!FREERTOS_UNICORE",
-                        "help": "Allows setting the core affinity of the Modbus controller task, i.e. whether the task is pinned to\nparticular CPU, or allowed to run on any CPU.",
-                        "id": "component-config-modbus-configuration-modbus-task-affinity",
-                        "name": "FMB_PORT_TASK_AFFINITY",
-                        "title": "Modbus task affinity",
-                        "type": "choice"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": null,
-                        "help": null,
-                        "id": "FMB_PORT_TASK_AFFINITY",
-                        "name": "FMB_PORT_TASK_AFFINITY",
-                        "range": null,
-                        "title": null,
-                        "type": "hex"
                     },
                     {
                         "children": [

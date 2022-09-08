@@ -1,20 +1,7 @@
 {
-  "terminal.integrated.profiles.osx": {
-    "ESP-IDF": {
-      "path": "zsh",
-      "args": ["-c", "source /Users/llmerlos/esp/scripts/export/v4.1.sh; $SHELL"]
+    "files.associations": {
+        "bits.h": "c",
+        "string.h": "c",
+        "filterbank.h": "c"
     }
-  },
-
-  "clangd.path": "/Users/llmerlos/esp/tools/llvm-project/build/bin/clangd",
-  "clangd.arguments": [
-    "--background-index",
-    "--query-driver=/Users/llmerlos/esp/env/v4.1/tools/tools/xtensa-esp32-elf/esp-2020r3-8.4.0/**/bin/xtensa-esp32-elf-*"
-  ],
-
-  "espidf.path" : "/Users/llmerlos/esp/env/v4.1/esp-idf",
-  "espidf.python": "/Users/llmerlos/esp/env/v4.1/tools/python_env/idf4.1_py3.9_env/bin/python",
-  "python.defaultInterpreterPath": "/Users/llmerlos/esp/env/v4.1/tools/python_env/idf4.1_py3.9_env/bin/python",
-  "python.terminal.activateEnvironment": false,
-  "nrf-connect.toolchain.path": "${nrf-connect.toolchain:2.0.0}"
 }

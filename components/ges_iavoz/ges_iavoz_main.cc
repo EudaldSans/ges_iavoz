@@ -191,7 +191,6 @@ void IAVoz_System_Task ( void * vParam )
 
         if (feature_status != kTfLiteOk)
         {
-            ESP_LOGE(TAG, "Feature Provider failed");
             continue;
         }
 
@@ -217,10 +216,11 @@ void IAVoz_System_Task ( void * vParam )
 
 
         const char* found_command = nullptr;
+        uint8_t found_index;
         uint8_t score = 0;
         bool is_new_command = false;
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
-        output, current_time, &found_command, &score, &is_new_command);
+        output, current_time, &found_command, &score, &is_new_command, &found_index);
         if (process_status != kTfLiteOk) 
         {
             ESP_LOGE(TAG, "RecognizeCommands::ProcessLatestResults() failed");
@@ -230,6 +230,7 @@ void IAVoz_System_Task ( void * vParam )
         if (is_new_command)
         {
             ESP_LOGI(TAG, "Heard %s (%d) @%dms", found_command, score, current_time);
+            sys->cb((IAVOZ_KEY_t)found_index, 0);
         }
 
     }

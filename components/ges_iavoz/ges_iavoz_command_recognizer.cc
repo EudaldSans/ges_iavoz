@@ -34,7 +34,7 @@ RecognizeCommands::RecognizeCommands(tflite::ErrorReporter* error_reporter,
 
 TfLiteStatus RecognizeCommands::ProcessLatestResults(
     const TfLiteTensor* latest_results, const int32_t current_time_ms,
-    const char** found_command, uint8_t* score, bool* is_new_command) {
+    const char** found_command, uint8_t* score, bool* is_new_command, uint8_t* found_index) {
   if ((latest_results->dims->size != 2) ||
       (latest_results->dims->data[0] != 1) ||
       (latest_results->dims->data[1] != kCategoryCount)) {
@@ -137,6 +137,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
   }
   *found_command = current_top_label;
   *score = current_top_score;
+  *found_index = current_top_index;
 
   return kTfLiteOk;
 }

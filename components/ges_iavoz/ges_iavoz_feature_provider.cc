@@ -20,6 +20,7 @@ limitations under the License.
 #include <cstddef>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 static const char *TAG = "IAVOZ_FP";
 
@@ -153,7 +154,6 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData ( IAVoz_FeatureProvider_t
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
                             &audio_samples);
-
 
             if (audio_samples_size < fp->ms-> kMaxAudioSampleSize) 
             {

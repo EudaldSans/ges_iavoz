@@ -128,8 +128,8 @@ void IAVoz_AudioProvider_Start ( IAVoz_AudioProvider_t * ap )
         return;
     }
 
-    xTaskCreate(IAVoz_AudioProvider_I2STask, "AudioProvider_I2STask", CONFIG_IAVOZ_MIC_TASK_STACK_SIZE, (void *) ap, CONFIG_IAVOZ_MIC_TASK_PRIORITY, &(ap->audio_task_handle));
     ap->is_audio_started = true;
+    xTaskCreate(IAVoz_AudioProvider_I2STask, "AudioProvider_I2STask", CONFIG_IAVOZ_MIC_TASK_STACK_SIZE, (void *) ap, CONFIG_IAVOZ_MIC_TASK_PRIORITY, &(ap->audio_task_handle));
 
     ESP_LOGI(TAG, "AudioProvider Task started");
 }
@@ -200,8 +200,6 @@ void IAVoz_AudioProvider_I2STask ( void * vParam )
     {
         i2s_read((i2s_port_t) GES_IAVOZ_I2S_NUM, (void*)i2s_read_buffer, i2s_bytes_to_read, &bytes_read, 10);
 
-        
-
         if (bytes_read <= 0) 
         {
             ESP_LOGE(TAG, "Error in I2S read : %d", bytes_read);
@@ -220,7 +218,7 @@ void IAVoz_AudioProvider_I2STask ( void * vParam )
             ap->latest_audio_timestamp +=
                 ((1000 * (bytes_written / 2)) / ap->ms->kAudioSampleFrequency);
 
-                ESP_LOGI(TAG, "%d-%d-%d-%d", i2s_read_buffer[0], i2s_read_buffer[1], i2s_read_buffer[2], i2s_read_buffer[3]);
+                ESP_LOGD(TAG, "%d-%d-%d-%d", i2s_read_buffer[0], i2s_read_buffer[1], i2s_read_buffer[2], i2s_read_buffer[3]);
 
             if (bytes_written <= 0) 
             {

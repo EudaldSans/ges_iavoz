@@ -14,9 +14,9 @@
 #include "tensorflow/lite/c/common.h"
 
 #define GES_IAVOZ_I2S_NUM   1
-#define GES_IAVOZ_PIN_BCK   26
-#define GES_IAVOZ_PIN_WS    32
-#define GES_IAVOZ_PIN_DIN   33
+#define GES_IAVOZ_PIN_BCK   27
+#define GES_IAVOZ_PIN_WS    26
+#define GES_IAVOZ_PIN_DIN   25
 
 typedef struct {
     ringbuf_t * audio_capture_buffer;

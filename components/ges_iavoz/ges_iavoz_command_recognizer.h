@@ -140,7 +140,8 @@ class RecognizeCommands {
   TfLiteStatus ProcessLatestResults(const TfLiteTensor* latest_results,
                                     const int32_t current_time_ms,
                                     const char** found_command, uint8_t* score,
-                                    bool* is_new_command);
+                                    bool* is_new_command,
+                                    uint8_t* found_index);
 
  private:
   // Configuration
