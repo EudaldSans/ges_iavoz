@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "bits.h": "c",
-        "string.h": "c",
-        "filterbank.h": "c"
-    }
-}
