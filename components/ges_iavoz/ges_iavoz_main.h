@@ -31,7 +31,6 @@ typedef struct {
     IAVoz_ModelSettings_t * ms;
 
     uint8_t * tensor_arena;
-    int8_t * feature_buffer;
     int8_t * model_input_buffer;
     TfLiteTensor * model_input;
 

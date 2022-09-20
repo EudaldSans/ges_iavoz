@@ -23,7 +23,6 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
     sys->ms = ms;
 
     sys->tensor_arena = (uint8_t *) malloc(kTensorArenaSize * sizeof(uint8_t));
-    sys->feature_buffer = (int8_t *) malloc(ms->kFeatureElementCount * sizeof(uint8_t));
 
     // TF API
     sys->model = tflite::GetModel(g_model);
@@ -160,16 +159,9 @@ bool IAVoz_System_DeInit ( IAVoz_System_t * sys )
     if(!sys->tensor_arena)
     {
         free(sys->tensor_arena);
-    }
-
-    if(!sys->feature_buffer)
-    {
-        free(sys->feature_buffer);
-    }
-    
+    }   
 
     // safely delete model settings
-
     bool ok = IAVoz_FeatureProvider_DeInit(sys->fp);
     ok = ok && IAVoz_AudioProvider_DeInit(sys->ap);
 
