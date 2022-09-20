@@ -37,7 +37,7 @@ constexpr int kFeatureSliceDurationMs = 30;
 constexpr int kSilenceIndex = 0;
 constexpr int kUnknownIndex = 1;
 // If you modify the output categories, you need to update the following values.
-constexpr int kCategoryCount = 4;
+constexpr int kCategoryCount = 6;
 
 extern const char* kCategoryLabels[kCategoryCount];
 

@@ -25,33 +25,38 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
     sys->tensor_arena = (uint8_t *) malloc(kTensorArenaSize * sizeof(uint8_t));
     sys->feature_buffer = (int8_t *) malloc(ms->kFeatureElementCount * sizeof(uint8_t));
 
-
     // TF API
     sys->model = tflite::GetModel(g_model);
-    if (sys->model->version() != TFLITE_SCHEMA_VERSION)
-    {
+    if (sys->model->version() != TFLITE_SCHEMA_VERSION){
         ESP_LOGE(TAG, "Model provided is schema version %d not equal to supported version %d.", sys->model->version(), TFLITE_SCHEMA_VERSION);
         return false;
     }
 
     sys->error_reporter = new tflite::MicroErrorReporter();
 
-
-    sys->micro_op_resolver = new tflite::MicroMutableOpResolver<4>(sys->error_reporter);
-    if (sys->micro_op_resolver->AddDepthwiseConv2D() != kTfLiteOk) 
-    {
+    sys->micro_op_resolver = new tflite::MicroMutableOpResolver<6>(sys->error_reporter);
+    if (sys->micro_op_resolver->AddDepthwiseConv2D() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add deppth wise conv 2D layer");
         return false;
     }
-    if (sys->micro_op_resolver->AddFullyConnected() != kTfLiteOk) 
-    {
+    if (sys->micro_op_resolver->AddFullyConnected() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add fully connected layer");
         return false;
     }
-    if (sys->micro_op_resolver->AddSoftmax() != kTfLiteOk) 
-    {
+    if (sys->micro_op_resolver->AddSoftmax() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add softmax layer");
         return false;
     }
-    if (sys->micro_op_resolver->AddReshape() != kTfLiteOk) 
-    {
+    if (sys->micro_op_resolver->AddReshape() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add reshape layer");
+        return false;
+    }
+    if (sys->micro_op_resolver->AddMaxPool2D() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add max pool 2D layer");
+        return false;
+    }
+    if (sys->micro_op_resolver->AddConv2D() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add conv 2D layer");
         return false;
     }
 
@@ -62,8 +67,6 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
         ESP_LOGE(TAG, "AllocateTensors() failed");
         return false;
     }
-
-
 
     // Get information about the memory area to use for the model's input.
     sys->model_input = sys->interpreter->input(0);
@@ -175,60 +178,44 @@ bool IAVoz_System_DeInit ( IAVoz_System_t * sys )
     return ok;
 }
 
-void IAVoz_System_Task ( void * vParam )
-{
+void IAVoz_System_Task ( void * vParam ) {
     IAVoz_System_t * sys = (IAVoz_System_t *) vParam;
     IAVoz_ModelSettings_t * ms = sys->ms;
 
     int32_t previous_time = 0;
 
-    for ( ;; )
-    {
+    for (;;) {
         const int32_t current_time = LatestAudioTimestamp(sys->ap);
         int how_many_new_slices = 0;
 
         TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices);
-
-        if (feature_status != kTfLiteOk)
-        {
-            continue;
-        }
-
+        if (feature_status != kTfLiteOk) {continue;}
         previous_time = current_time;
 
-        if ( how_many_new_slices == 0 )
-        {
-            continue;
-        }
+        if (how_many_new_slices == 0 ) {continue;}
 
-        for (int i = 0; i < ms->kFeatureElementCount; i++)
-        {
-            sys->model_input_buffer[i] = sys->feature_buffer[i];
+        // FIXME: Fetaure buffer does not change as the program is executed!!
+        for (int i = 0; i < ms->kFeatureElementCount; i++) {
+            sys->model_input_buffer[i] = sys->fp->feature_data[i];
         }
 
         TfLiteStatus invoke_status = sys->interpreter->Invoke();
-        if ( invoke_status != kTfLiteOk )
-        {
-            ESP_LOGE(TAG, "Interpeter failed");
-        }
+        if (invoke_status != kTfLiteOk ) { ESP_LOGE(TAG, "Interpeter failed");}
         
         TfLiteTensor * output = sys->interpreter->output(0);
-
-
         const char* found_command = nullptr;
         uint8_t found_index;
         uint8_t score = 0;
         bool is_new_command = false;
+
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
-        output, current_time, &found_command, &score, &is_new_command, &found_index);
-        if (process_status != kTfLiteOk) 
-        {
+            output, current_time, &found_command, &score, &is_new_command, &found_index);
+        if (process_status != kTfLiteOk) {
             ESP_LOGE(TAG, "RecognizeCommands::ProcessLatestResults() failed");
             return;
         }
 
-        if (is_new_command)
-        {
+        if (is_new_command) {
             ESP_LOGI(TAG, "Heard %s (%d) @%dms", found_command, score, current_time);
             sys->cb((IAVOZ_KEY_t)found_index, 0);
         }

@@ -86,8 +86,9 @@ bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp )
     return true;
 }
 
-TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData ( IAVoz_FeatureProvider_t * fp, IAVoz_AudioProvider_t * ap, int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices)
-{
+TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t * fp, IAVoz_AudioProvider_t * ap, 
+        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices) {
+
     static bool is_first_run_ = true;
     // Quantize the time into steps as long as each window stride, so we can
     // figure out which audio data we need to fetch.
@@ -97,17 +98,13 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData ( IAVoz_FeatureProvider_t
     int slices_needed = current_step - last_step;
     // If this is the first call, make sure we don't use any cached information.
 
-    if (is_first_run_) 
-    {
+    if (is_first_run_) {
         is_first_run_ = false;
         slices_needed = fp->ms->kFeatureSliceCount;
     }
 
+    if (slices_needed > fp->ms->kFeatureSliceCount) {slices_needed = fp->ms->kFeatureSliceCount;}
 
-    if (slices_needed > fp->ms->kFeatureSliceCount) 
-    {
-        slices_needed = fp->ms->kFeatureSliceCount;
-    }
     *how_many_new_slices = slices_needed;
 
     const int slices_to_keep = fp->ms->kFeatureSliceCount - slices_needed;
@@ -125,38 +122,35 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData ( IAVoz_FeatureProvider_t
     // +-----------+   --        +-----------+
     // | data@80ms | --          |  <empty>  |
     // +-----------+             +-----------+
-    if (slices_to_keep > 0) 
-    {
-        for (int dest_slice = 0; dest_slice < slices_to_keep; ++dest_slice) 
-        {
+
+    if (slices_to_keep > 0) {
+        for (int dest_slice = 0; dest_slice < slices_to_keep; ++dest_slice) {
             int8_t* dest_slice_data = fp->feature_data + (dest_slice * fp->ms->kFeatureSliceSize);
             const int src_slice = dest_slice + slices_to_drop;
             const int8_t* src_slice_data = fp->feature_data + (src_slice * fp->ms->kFeatureSliceSize);
             
-            for (int i = 0; i < fp->ms->kFeatureSliceSize; ++i) 
-            {
+            for (int i = 0; i < fp->ms->kFeatureSliceSize; ++i) {
                 dest_slice_data[i] = src_slice_data[i];
             }
         }
     }
 
+
     // Any slices that need to be filled in with feature data have their
     // appropriate audio data pulled, and features calculated for that slice.
-    if (slices_needed > 0) 
-    {
-        for (int new_slice = slices_to_keep; new_slice < fp->ms->kFeatureSliceCount; ++new_slice) 
-        {
+    if (slices_needed > 0) {
+        for (int new_slice = slices_to_keep; new_slice < fp->ms->kFeatureSliceCount; ++new_slice) {
             const int new_step = (current_step - fp->ms->kFeatureSliceCount + 1) + new_slice;
             const int32_t slice_start_ms = (new_step * fp->ms->kFeatureSliceStrideMs);
             int16_t* audio_samples = nullptr;
             int audio_samples_size = 0;
+
             // TODO(petewarden): Fix bug that leads to non-zero slice_start_ms
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
                             &audio_samples);
 
-            if (audio_samples_size < fp->ms-> kMaxAudioSampleSize) 
-            {
+            if (audio_samples_size < fp->ms-> kMaxAudioSampleSize) {
                 ESP_LOGE(TAG, "Audio data size %d too small, want %d", audio_samples_size, fp->ms->kMaxAudioSampleSize);
                 return kTfLiteError;
             }
@@ -166,9 +160,8 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData ( IAVoz_FeatureProvider_t
             TfLiteStatus generate_status = GenerateMicroFeatures(
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
                 new_slice_data, &num_samples_read);
-            if (generate_status != kTfLiteOk) {
-            return generate_status;
-            }
+            
+            if (generate_status != kTfLiteOk) {return generate_status;}
         }
     }
 
@@ -219,8 +212,7 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
     
     FrontendOutput frontend_output = FrontendProcessSamples(&(fp->frontend_state), frontend_input, input_size, num_samples_read);
 
-    for (size_t i = 0; i < frontend_output.size; ++i) 
-    {
+    for (size_t i = 0; i < frontend_output.size; ++i) {
     // These scaling values are derived from those used in input_data.py in the
     // training pipeline.
     // The feature pipeline outputs 16-bit signed integers in roughly a 0 to 670
@@ -253,6 +245,7 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
         
         output[i] = value;
     }
+
 
     return kTfLiteOk;
 }

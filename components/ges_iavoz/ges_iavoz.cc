@@ -32,15 +32,19 @@ static const char * TAG = "IAVOZMAIN";
 const char* kCategoryLabels[kCategoryCount] = {
     "silence",
     "unknown",
-    "yes",
-    "no",
+    "ayuda",
+    "apaga",
+    "enciende",
+    "heylola",
 };
 
 const int kCategoryEnum[kCategoryCount] = {
     (int) IAVOZ_KEY_NULL,
     (int) IAVOZ_KEY_NULL,
+    (int) IAVOZ_KEY_SOCORRO,
     (int) IAVOZ_KEY_ENCIENDE,
-    (int) IAVOZ_KEY_APAGA
+    (int) IAVOZ_KEY_APAGA,
+    (int) IAVOZ_KEY_NULL,
 };
 
 static IAVoz_ModelSettings_t IAVoz_ModelSettings = {
