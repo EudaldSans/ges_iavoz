@@ -35,7 +35,7 @@ typedef struct {
 } IAVoz_AudioProvider_t;
 
 const int32_t kAudioCaptureBufferSize = 80000;
-const int32_t i2s_bytes_to_read = 3200;
+const int32_t i2s_bytes_to_read = 3200 * 2;
 
 
 

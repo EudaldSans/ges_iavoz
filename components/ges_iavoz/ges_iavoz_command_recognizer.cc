@@ -95,11 +95,13 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     // Find the current highest scoring category.
     int current_top_index = 0;
     int32_t current_top_score = 0;
+    int high_probability_samples = 0;
     for (int i = 0; i < kCategoryCount; ++i) {
         if (average_scores[i] > current_top_score) {
             current_top_score = average_scores[i];
             current_top_index = i;
         }
+        if ((average_scores[i]) > 50) {high_probability_samples++;}
     }
     const char* current_top_label = kCategoryLabels[current_top_index];
 
@@ -112,18 +114,6 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         time_since_last_top = current_time_ms - previous_top_label_time_;
     }
 
-    if ((current_top_score > detection_threshold_) && ((current_top_label != previous_top_label_) || (time_since_last_top > suppression_ms_))) {
-        previous_top_label_ = current_top_label;
-        previous_top_label_time_ = current_time_ms;
-        *is_new_command = true;
-    } else {
-        *is_new_command = false;
-    }
-
-    *found_command = current_top_label;
-    *score = current_top_score;
-    *found_index = current_top_index;
-
     std::cout << std::setprecision(2) << std::fixed;
     std::cout << "SCORES " << current_time_ms << "ms";
     for (int i = 0; i < kCategoryCount; ++i) 
@@ -131,6 +121,27 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     std::cout << "\t " << kCategoryLabels[i] << ": " << 100*(((float)average_scores[i]) / ((float)253)) << "% ";
     std::cout << "\t top label: " << current_top_label << " " << 100*((float)current_top_score / (float)253) << "%";
     std::cout << std::endl;
+
+    *is_new_command = false;
+
+    if (time_since_last_top >= 1750) {
+        *is_new_command = false;
+        previous_top_label_ = "_silence_";
+        previous_top_label_time_ = std::numeric_limits<int32_t>::min();
+    }
+
+    if (current_top_score < detection_threshold_)   {return kTfLiteOk;}
+    if (current_top_label == previous_top_label_)   {return kTfLiteOk;}
+    if (time_since_last_top > suppression_ms_)      {return kTfLiteOk;}
+    if (high_probability_samples != 1)              {return kTfLiteOk;}
+
+    previous_top_label_ = current_top_label;
+    previous_top_label_time_ = current_time_ms;
+    *is_new_command = true;
+
+    *found_command = current_top_label;
+    *score = current_top_score;
+    *found_index = current_top_index;
 
     return kTfLiteOk;
 }
