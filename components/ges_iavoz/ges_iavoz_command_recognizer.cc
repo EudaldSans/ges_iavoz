@@ -32,11 +32,13 @@ RecognizeCommands::RecognizeCommands(tflite::ErrorReporter* error_reporter,
         previous_results_(error_reporter) {
     previous_top_label_ = IAVOZ_KEY_NULL;
     previous_top_label_time_ = std::numeric_limits<int32_t>::min();
+    activation = false;
 }
 
 TfLiteStatus RecognizeCommands::ProcessLatestResults(
-    const TfLiteTensor* latest_results, const int32_t current_time_ms,
-    IAVOZ_KEY_t* found_command, uint8_t* score, bool* is_new_command, uint8_t* found_index, int32_t STP) {
+            const TfLiteTensor* latest_results, const int32_t current_time_ms,
+            IAVOZ_KEY_t* found_command, uint8_t* score, bool* is_new_command, 
+            uint8_t* found_index, int32_t STP) {
     if ((latest_results->dims->size != 2) || (latest_results->dims->data[0] != 1) || (latest_results->dims->data[1] != kCategoryCount)) {
         TF_LITE_REPORT_ERROR(error_reporter_,
             "The results for recognition should contain %d elements, but there are %d in an %d-dimensional shape",
@@ -125,8 +127,9 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
 
     *is_new_command = false;
 
-    if (time_since_last_top >= 1750) {
+    if (time_since_last_top >= 1750 && activation) {
         *is_new_command = false;
+        activation = false;
         previous_top_label_ = IAVOZ_KEY_NULL;
         previous_top_label_time_ = std::numeric_limits<int32_t>::min();
     }
@@ -137,9 +140,16 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     if (high_probability_samples != 1)              {return kTfLiteOk;}
     if (STP < 30)                                   {return kTfLiteOk;}
 
+    if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
+        activation = true;
+        previous_top_label_time_ = current_time_ms;
+    } else if (current_top_label != IAVOZ_KEY_HEYLOLA && current_top_label != IAVOZ_KEY_NULL && activation) {
+        *is_new_command = true;
+        activation = false;
+        previous_top_label_time_ = std::numeric_limits<int32_t>::min();
+    }
+
     previous_top_label_ = current_top_label;
-    previous_top_label_time_ = current_time_ms;
-    *is_new_command = true;
 
     *found_command = current_top_label;
     *score = current_top_score;

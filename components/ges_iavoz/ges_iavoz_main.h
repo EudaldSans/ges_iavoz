@@ -37,6 +37,7 @@ typedef struct {
     int32_t previous_time;
     pIAVOZCallback_t cb;
     TaskHandle_t th;
+    
     bool is_sys_started;
 } IAVoz_System_t;
 
