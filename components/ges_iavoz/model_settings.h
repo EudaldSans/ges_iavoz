@@ -16,6 +16,8 @@ limitations under the License.
 #ifndef TENSORFLOW_LITE_MICRO_EXAMPLES_MICRO_SPEECH_MICRO_FEATURES_MICRO_MODEL_SETTINGS_H_
 #define TENSORFLOW_LITE_MICRO_EXAMPLES_MICRO_SPEECH_MICRO_FEATURES_MICRO_MODEL_SETTINGS_H_
 
+#include "ges_iavoz.h"
+
 // Keeping these as constant expressions allow us to allocate fixed-sized arrays
 // on the stack for our working memory.
 
@@ -39,6 +41,6 @@ constexpr int kUnknownIndex = 1;
 // If you modify the output categories, you need to update the following values.
 constexpr int kCategoryCount = 6;
 
-extern const char* kCategoryLabels[kCategoryCount];
+extern const IAVOZ_KEY_t kCategoryLabels[kCategoryCount];
 
 #endif  // TENSORFLOW_LITE_MICRO_EXAMPLES_MICRO_SPEECH_MICRO_FEATURES_MICRO_MODEL_SETTINGS_H_

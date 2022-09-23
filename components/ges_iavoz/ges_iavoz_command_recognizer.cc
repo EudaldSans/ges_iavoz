@@ -30,13 +30,13 @@ RecognizeCommands::RecognizeCommands(tflite::ErrorReporter* error_reporter,
         suppression_ms_(suppression_ms),
         minimum_count_(minimum_count),
         previous_results_(error_reporter) {
-    previous_top_label_ = "_silence_";
+    previous_top_label_ = IAVOZ_KEY_NULL;
     previous_top_label_time_ = std::numeric_limits<int32_t>::min();
 }
 
 TfLiteStatus RecognizeCommands::ProcessLatestResults(
     const TfLiteTensor* latest_results, const int32_t current_time_ms,
-    const char** found_command, uint8_t* score, bool* is_new_command, uint8_t* found_index) {
+    IAVOZ_KEY_t* found_command, uint8_t* score, bool* is_new_command, uint8_t* found_index) {
     if ((latest_results->dims->size != 2) || (latest_results->dims->data[0] != 1) || (latest_results->dims->data[1] != kCategoryCount)) {
         TF_LITE_REPORT_ERROR(error_reporter_,
             "The results for recognition should contain %d elements, but there are %d in an %d-dimensional shape",
@@ -103,7 +103,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         }
         if ((average_scores[i]) > 50) {high_probability_samples++;}
     }
-    const char* current_top_label = kCategoryLabels[current_top_index];
+    IAVOZ_KEY_t current_top_label = kCategoryLabels[current_top_index];
 
     // If we've recently had another label trigger, assume one that occurs too
     // soon afterwards is a bad result.
@@ -126,13 +126,13 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
 
     if (time_since_last_top >= 1750) {
         *is_new_command = false;
-        previous_top_label_ = "_silence_";
+        previous_top_label_ = IAVOZ_KEY_NULL;
         previous_top_label_time_ = std::numeric_limits<int32_t>::min();
     }
 
     if (current_top_score < detection_threshold_)   {return kTfLiteOk;}
     if (current_top_label == previous_top_label_)   {return kTfLiteOk;}
-    if (time_since_last_top > suppression_ms_)      {return kTfLiteOk;}
+    if (time_since_last_top < suppression_ms_)      {return kTfLiteOk;}
     if (high_probability_samples != 1)              {return kTfLiteOk;}
 
     previous_top_label_ = current_top_label;

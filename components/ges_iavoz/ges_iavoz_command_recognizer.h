@@ -22,6 +22,8 @@ limitations under the License.
 #include "model_settings.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 
+#include "ges_iavoz.h"
+
 // Partial implementation of std::dequeue, just providing the functionality
 // that's needed to keep a record of previous neural network results over a
 // short time period, so they can be averaged together to produce a more
@@ -139,7 +141,7 @@ class RecognizeCommands {
   // Call this with the results of running a model on sample data.
   TfLiteStatus ProcessLatestResults(const TfLiteTensor* latest_results,
                                     const int32_t current_time_ms,
-                                    const char** found_command, uint8_t* score,
+                                    IAVOZ_KEY_t* found_command, uint8_t* score,
                                     bool* is_new_command,
                                     uint8_t* found_index);
 
@@ -153,7 +155,7 @@ class RecognizeCommands {
 
   // Working variables
   PreviousResultsQueue previous_results_;
-  const char* previous_top_label_;
+  IAVOZ_KEY_t previous_top_label_;
   int32_t previous_top_label_time_;
 };
 

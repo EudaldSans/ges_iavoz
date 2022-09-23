@@ -29,22 +29,13 @@
 /* ------------------ */
 static const char * TAG = "IAVOZMAIN";
 
-const char* kCategoryLabels[kCategoryCount] = {
-    "silence",
-    "unknown",
-    "ayuda",
-    "apaga",
-    "enciende",
-    "heylola",
-};
-
-const int kCategoryEnum[kCategoryCount] = {
-    (int) IAVOZ_KEY_NULL,
-    (int) IAVOZ_KEY_NULL,
-    (int) IAVOZ_KEY_SOCORRO,
-    (int) IAVOZ_KEY_ENCIENDE,
-    (int) IAVOZ_KEY_APAGA,
-    (int) IAVOZ_KEY_NULL,
+const IAVOZ_KEY_t kCategoryLabels[kCategoryCount] = {
+    IAVOZ_KEY_NULL,
+    IAVOZ_KEY_NULL,
+    IAVOZ_KEY_SOCORRO,
+    IAVOZ_KEY_APAGA,
+    IAVOZ_KEY_ENCIENDE,
+    IAVOZ_KEY_HEYLOLA,
 };
 
 static IAVoz_ModelSettings_t IAVoz_ModelSettings = {
@@ -59,7 +50,6 @@ static IAVoz_ModelSettings_t IAVoz_ModelSettings = {
     .kUnknownIndex = kUnknownIndex,
     .kCategoryCount = kCategoryCount,
     .kCategoryLabels = kCategoryLabels,
-    .kCategoryEnum = kCategoryEnum
 };
 
 static IAVoz_System_t * IAVoz_System;

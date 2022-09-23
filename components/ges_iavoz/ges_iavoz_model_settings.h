@@ -14,8 +14,7 @@ typedef struct {
     int kSilenceIndex;
     int kUnknownIndex;
     int kCategoryCount;
-    const char ** kCategoryLabels;
-    const int * kCategoryEnum;
+    const IAVOZ_KEY_t * kCategoryLabels;
 } IAVoz_ModelSettings_t;
 
 #endif

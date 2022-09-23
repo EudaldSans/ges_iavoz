@@ -195,7 +195,7 @@ void IAVoz_System_Task ( void * vParam ) {
         if (invoke_status != kTfLiteOk ) { ESP_LOGE(TAG, "Interpeter failed");}
         
         TfLiteTensor * output = sys->interpreter->output(0);
-        const char* found_command = nullptr;
+        IAVOZ_KEY_t found_command;
         uint8_t found_index;
         uint8_t score = 0;
         bool is_new_command = false;
@@ -208,7 +208,7 @@ void IAVoz_System_Task ( void * vParam ) {
         }
 
         if (is_new_command) {
-            ESP_LOGI(TAG, "Heard %s (%d) @%dms", found_command, score, current_time);
+            ESP_LOGI(TAG, "Heard %d (%d) @%dms", found_command, score, current_time);
             sys->cb((IAVOZ_KEY_t)found_index, 0);
         }
 

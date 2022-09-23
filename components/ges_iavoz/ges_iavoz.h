@@ -30,6 +30,7 @@ extern "C" {
 /* ----- */
 typedef enum {
     IAVOZ_KEY_NULL = 0,
+    IAVOZ_KEY_HEYLOLA,
     IAVOZ_KEY_ENCIENDE,
     IAVOZ_KEY_APAGA,
     IAVOZ_KEY_SUBE,
