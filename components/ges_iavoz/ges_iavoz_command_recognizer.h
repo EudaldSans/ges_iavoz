@@ -143,7 +143,7 @@ class RecognizeCommands {
                                     const int32_t current_time_ms,
                                     IAVOZ_KEY_t* found_command, uint8_t* score,
                                     bool* is_new_command,
-                                    uint8_t* found_index);
+                                    uint8_t* found_index, int32_t STP);
 
  private:
   // Configuration

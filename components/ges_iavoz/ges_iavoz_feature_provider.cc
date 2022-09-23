@@ -27,7 +27,7 @@ static const char *TAG = "IAVOZ_FP";
 
 
 TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp );
-TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read );
+TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP);
 
 
 bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelSettings_t * ms )
@@ -87,7 +87,7 @@ bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp )
 }
 
 TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t * fp, IAVoz_AudioProvider_t * ap, 
-        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices) {
+        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices, int32_t* STP) {
 
     static bool is_first_run_ = true;
     // Quantize the time into steps as long as each window stride, so we can
@@ -159,7 +159,7 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             size_t num_samples_read;
             TfLiteStatus generate_status = GenerateMicroFeatures(
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
-                new_slice_data, &num_samples_read);
+                new_slice_data, &num_samples_read, STP);
             
             if (generate_status != kTfLiteOk) {return generate_status;}
         }
@@ -197,16 +197,13 @@ TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp )
     return kTfLiteOk;
 }
 
-TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read ) 
-{
+TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP) {
     const int16_t* frontend_input;
     static bool g_is_first_time = true;
     if (g_is_first_time) {
         frontend_input = input;
         g_is_first_time = false;
-    } 
-    else 
-    {
+    } else {
         frontend_input = input + 160;
     }
     
@@ -233,19 +230,14 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
         int32_t value = ((frontend_output.values[i] * value_scale) + (value_div / 2)) / value_div;
         value -= 128;
         
-        if (value < -128) 
-        {
-            value = -128;
-        }
-        
-        if (value > 127) 
-        {
-            value = 127;
-        }
+        if (value < -128) {value = -128;}
+        if (value > 127) {value = 127;}
         
         output[i] = value;
+        *STP += frontend_output.values[i];
     }
 
+    *STP /= frontend_output.size;
 
     return kTfLiteOk;
 }
