@@ -7,7 +7,7 @@ menu "SIMON IAVOZ"
         depends on IAVOZ_ENABLE
         int "Underlying IAVOZ system task stack size"
         range 1024 32768
-        default 4096
+        default 7168
         help
             The stack size of the IAVOZ's system management underlying task.
 		
@@ -24,7 +24,7 @@ menu "SIMON IAVOZ"
         depends on IAVOZ_ENABLE
         int "Underlying task stack size"
         range 1024 32768
-        default 4096
+        default 7168
         help
             The stack size of the microphone's management underlying task.
 		
@@ -48,7 +48,7 @@ menu "SIMON IAVOZ"
         depends on IAVOZ_ENABLE
         int "I2S clock pin"
         range 0 40
-        default 26
+        default 13
         help
             The I2S pin used for clock signal.
 
@@ -56,7 +56,7 @@ menu "SIMON IAVOZ"
         depends on IAVOZ_ENABLE
         int "I2S word-select pin"
         range 0 40
-        default 32
+        default 0
         help
             The I2S pin used for word-select signal.
 
@@ -64,7 +64,7 @@ menu "SIMON IAVOZ"
         depends on IAVOZ_ENABLE
         int "I2S data pin"
         range 0 40
-        default 33
+        default 22
         help
             The I2S pin used for data signal.
 
