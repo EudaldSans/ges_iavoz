@@ -16,6 +16,7 @@ typedef struct {
     int8_t * feature_data;
     IAVoz_ModelSettings_t * ms;
     struct FrontendState frontend_state;
+    float NSTP;
 } IAVoz_FeatureProvider_t;
 
 // GES API

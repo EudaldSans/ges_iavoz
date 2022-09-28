@@ -179,7 +179,6 @@ void IAVoz_System_Task ( void * vParam ) {
 
         if (how_many_new_slices == 0 ) {continue;}
 
-        // FIXME: Fetaure buffer does not change as the program is executed!!
         for (int i = 0; i < ms->kFeatureElementCount; i++) {
             sys->model_input_buffer[i] = sys->fp->feature_data[i];
         }

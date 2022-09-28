@@ -58,27 +58,19 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
     memset(fp->feature_data, 0, fp->ms->kFeatureElementCount);
 
     InitializeMicroFeatures( fp );
-
+    fp->NSTP = 0;
 
     return true;
 }
 
-bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp )
-{
-    if ( !fp )
-    {
+bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp ) {
+    if (!fp ) {
         ESP_LOGE(TAG, "Failed to de-init Feature Provider");
         return false;
     }
 
-    if ( !fp->feature_data )
-    {
-        ESP_LOGW(TAG, "Null feature data");
-    }
-    else
-    {
-        free(fp->feature_data);
-    }
+    if (!fp->feature_data ) {ESP_LOGW(TAG, "Null feature data");}
+    else {free(fp->feature_data);}
 
     free(fp);
     ESP_LOGI(TAG, "Feature Provider de-initialized");
@@ -99,7 +91,6 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
     // If this is the first call, make sure we don't use any cached information.
 
     if (is_first_run_) {
-        is_first_run_ = false;
         slices_needed = fp->ms->kFeatureSliceCount;
     }
 
@@ -135,6 +126,10 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
         }
     }
 
+    uint16_t zero_crossings = 0;
+    uint32_t this_STP = 0;
+    static const float p = 0.2;
+
 
     // Any slices that need to be filled in with feature data have their
     // appropriate audio data pulled, and features calculated for that slice.
@@ -144,11 +139,19 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             const int32_t slice_start_ms = (new_step * fp->ms->kFeatureSliceStrideMs);
             int16_t* audio_samples = nullptr;
             int audio_samples_size = 0;
-
+            
             // TODO(petewarden): Fix bug that leads to non-zero slice_start_ms
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
                             &audio_samples);
+
+            this_STP += audio_samples[0]*audio_samples[0];
+            for (uint16_t sample = 1; sample < audio_samples_size; sample++) {
+                if (audio_samples[sample]*audio_samples[sample - 1] < 0) {zero_crossings++;}
+                this_STP += audio_samples[sample]*audio_samples[sample];
+            }
+
+            this_STP /= audio_samples_size;
 
             if (audio_samples_size < fp->ms-> kMaxAudioSampleSize) {
                 ESP_LOGE(TAG, "Audio data size %d too small, want %d", audio_samples_size, fp->ms->kMaxAudioSampleSize);
@@ -161,8 +164,21 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
                 new_slice_data, &num_samples_read, STP);
             
-            if (generate_status != kTfLiteOk) {return generate_status;}
+            if (generate_status != kTfLiteOk) {return generate_status;}         
         }
+    }
+
+    if (is_first_run_) {
+        is_first_run_ = false;
+        fp->NSTP = this_STP;
+        return kTfLiteOk;
+    }
+
+    if (this_STP < fp->NSTP){
+        ESP_LOGI(TAG, "Unvoiced frame");
+        fp->NSTP = (1-p)*fp->NSTP + p*this_STP;
+    } else {
+        ESP_LOGI(TAG, "Voiced frame");
     }
 
     return kTfLiteOk;
@@ -199,6 +215,7 @@ TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp )
 
 TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP) {
     const int16_t* frontend_input;
+    uint16_t zero_crossings = 0;
     static bool g_is_first_time = true;
     if (g_is_first_time) {
         frontend_input = input;
@@ -238,6 +255,10 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
     }
 
     *STP /= frontend_output.size;
+
+    // printf("ZCR: %d, STP: %d\n", zero_crossings, *STP);
+    if (20 < zero_crossings && zero_crossings < 80 && *STP > 50) {printf("Voice detected!\n");}
+
 
     return kTfLiteOk;
 }
