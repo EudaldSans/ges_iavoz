@@ -138,7 +138,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     if (current_top_label == previous_top_label_)   {return kTfLiteOk;}
     if (time_since_last_top < suppression_ms_)      {return kTfLiteOk;}
     if (high_probability_samples != 1)              {return kTfLiteOk;}
-    if (STP < 30)                                   {return kTfLiteOk;}
+    // if (STP < 30)                                   {return kTfLiteOk;}
 
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
         activation = true;

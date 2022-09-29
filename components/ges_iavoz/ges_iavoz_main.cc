@@ -1,12 +1,13 @@
 #include "ges_iavoz_main.h"
 #include "ges_iavoz_audio_provider.h"
 #include <sys/_stdint.h>
+#include "model.h"
 
 #define MAX_STP_SAMPLES 3
 
 const char * TAG = "IAVOZ_SYS";
 
-constexpr int kTensorArenaSize = 30 * 1024;
+// constexpr int kTensorArenaSize = g_model_len;
 
 void IAVoz_System_Task ( void * vParam );
 
@@ -21,7 +22,7 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
 
     sys->ms = ms;
 
-    sys->tensor_arena = (uint8_t *) malloc(kTensorArenaSize * sizeof(uint8_t));
+    sys->tensor_arena = (uint8_t *) malloc(g_model_len * sizeof(uint8_t));
 
     // TF API
     sys->model = tflite::GetModel(g_model);
@@ -58,7 +59,7 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
         return false;
     }
 
-    sys->interpreter = new tflite::MicroInterpreter(sys->model, *(sys->micro_op_resolver), sys->tensor_arena, kTensorArenaSize, sys->error_reporter);
+    sys->interpreter = new tflite::MicroInterpreter(sys->model, *(sys->micro_op_resolver), sys->tensor_arena, g_model_len, sys->error_reporter);
 
     TfLiteStatus allocate_status = sys->interpreter->AllocateTensors();
     if (allocate_status != kTfLiteOk) {
@@ -197,6 +198,8 @@ void IAVoz_System_Task ( void * vParam ) {
             STP += STP_buffer[i];
         }
         STP /= MAX_STP_SAMPLES;
+
+        // if (!sys->fp->voice_detected) {continue;}
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
             output, current_time, &found_command, &score, &is_new_command, &found_index, STP);
