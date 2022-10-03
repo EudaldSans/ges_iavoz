@@ -22,8 +22,8 @@ limitations under the License.
 #include <string.h>
 #include <stdio.h>
 
-#define NOISE_T     2
-#define SPEECH_T    2
+#define NOISE_T     4
+#define SPEECH_T    16
 #define TRANS_T     4
 
 static const char *TAG = "IAVOZ_FP";
@@ -86,7 +86,7 @@ bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp ) {
 }
 
 TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t * fp, IAVoz_AudioProvider_t * ap, 
-        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices, int32_t* old_STP) {
+        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices) {
 
     static bool is_first_run_ = true;
     // Quantize the time into steps as long as each window stride, so we can
@@ -145,18 +145,28 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             const int32_t slice_start_ms = (new_step * fp->ms->kFeatureSliceStrideMs);
             int16_t* audio_samples = nullptr;
             int audio_samples_size = 0;
+            int slice_average = 0;
+            STP = 0;
+            ZCR = 0;
             
             // TODO(petewarden): Fix bug that leads to non-zero slice_start_ms
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
                             &audio_samples);
 
-            total_samples += audio_samples_size;
+            for (uint16_t sample = 0; sample < audio_samples_size; sample++) {
+                slice_average += audio_samples[sample];
+            }
+            
+            slice_average /= audio_samples_size;
 
             for (uint16_t sample = 1; sample < audio_samples_size; sample++) {
-                if (audio_samples[sample]*audio_samples[sample - 1] < 0) {ZCR++;}
-                STP += audio_samples[sample]*audio_samples[sample];
+                if ((audio_samples[sample - 1] - slice_average) * (audio_samples[sample] - slice_average) < 0) {
+                    ZCR++;
+                }
             }
+
+            ZCR = ZCR * 31.25; // Zero crossing rate each 1s
 
             if (audio_samples_size < fp->ms-> kMaxAudioSampleSize) {
                 ESP_LOGE(TAG, "Audio data size %d too small, want %d", audio_samples_size, fp->ms->kMaxAudioSampleSize);
@@ -167,29 +177,32 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             size_t num_samples_read;
             TfLiteStatus generate_status = GenerateMicroFeatures(
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
-                new_slice_data, &num_samples_read, old_STP);
+                new_slice_data, &num_samples_read, &STP);
+            
+            // printf("ZCR: %5d\t STP: %5d\tNSTP: %05.2f\n", ZCR, STP, fp->NSTP);
+            UpdateState(fp, STP, ZCR);
+            fp->NSTP = (1-p)*fp->NSTP + p*STP;
             
             if (generate_status != kTfLiteOk) {return generate_status;}         
         }
     }
 
-    ZCR /= (fp->ms->kFeatureSliceStrideMs / 10) * slices_needed; // Zero crossing rate each 10ms
-    STP /= total_samples;
+    
 
     // UpdateState(fp, STP, ZCR);
 
-    if (is_first_run_) {
-        is_first_run_ = false;
-        fp->NSTP = STP / (fp->ms->kFeatureSliceCount - slices_to_keep);
-        return kTfLiteOk;
-    }
+    // if (is_first_run_) {
+    //     is_first_run_ = false;
+    //     fp->NSTP = STP / (fp->ms->kFeatureSliceCount - slices_to_keep);
+    //     return kTfLiteOk;
+    // }
 
-    if (STP < 1.2*fp->NSTP && (20 < ZCR && ZCR < 80)){
-        fp->voice_detected = false;
-        fp->NSTP = (1-p)*fp->NSTP + p*STP;
-    } else {
-        fp->voice_detected = true;
-    }
+    // if (STP < 1.2*fp->NSTP && (20 < ZCR && ZCR < 80)){
+    //     fp->voice_detected = false;
+    //     fp->NSTP = (1-p)*fp->NSTP + p*STP;
+    // } else {
+    //     fp->voice_detected = true;
+    // }
 
     return kTfLiteOk;
 }
@@ -269,7 +282,7 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
 }
 
 void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
-    bool lld = STP > 1.7*fp->NSTP && (30 < ZCR && ZCR < 70);
+    bool lld = STP > 55 && (625 < ZCR && ZCR < 1750);
 
     switch (fp->current_state) {
         case STATE_INIT:
@@ -281,7 +294,7 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
             else {
                 fp->current_state = STATE_NOISE;
                 fp->NSTP /= TRANS_T;
-                // ESP_LOGI(TAG, "State Noise");
+                ESP_LOGI(TAG, "State Noise");
             }
 
             return;
@@ -294,7 +307,7 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
                 fp->n_trans = NOISE_T;
                 // ESP_LOGI(TAG, "State to speech");
             } else {
-                float p = 0.5;
+                float p = 0.7;
                 fp->NSTP = (1 - p)*fp->NSTP + p*STP;
             }
 

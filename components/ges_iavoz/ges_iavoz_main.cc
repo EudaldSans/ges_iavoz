@@ -173,7 +173,7 @@ void IAVoz_System_Task ( void * vParam ) {
         const int32_t current_time = LatestAudioTimestamp(sys->ap);
         int how_many_new_slices = 0;
 
-        TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices, STP_buffer + STP_position);
+        TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices);
         STP_position = (STP_position + 1) % MAX_STP_SAMPLES;
         if (feature_status != kTfLiteOk) {continue;}
         previous_time = current_time;
@@ -192,24 +192,18 @@ void IAVoz_System_Task ( void * vParam ) {
         uint8_t found_index;
         uint8_t score = 0;
         bool is_new_command = false;
-
-        int32_t STP = 0;
-        for (int i = 0; i < MAX_STP_SAMPLES; i++) {
-            STP += STP_buffer[i];
-        }
-        STP /= MAX_STP_SAMPLES;
-
-        // if (!sys->fp->voice_detected) {continue;}
+        
+        if (!sys->fp->voice_detected) {continue;}
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
-            output, current_time, &found_command, &score, &is_new_command, &found_index, STP);
+            output, current_time, &found_command, &score, &is_new_command, &found_index);
         if (process_status != kTfLiteOk) {
             ESP_LOGE(TAG, "RecognizeCommands::ProcessLatestResults() failed");
             return;
         }
 
         if (is_new_command) {
-            sys->cb(found_command, STP);
+            sys->cb(found_command, sys->fp->NSTP);
         }
 
     }
