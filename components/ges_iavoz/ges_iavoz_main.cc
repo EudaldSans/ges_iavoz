@@ -193,6 +193,7 @@ void IAVoz_System_Task ( void * vParam ) {
         uint8_t score = 0;
         bool is_new_command = false;
         
+        continue;
         if (!sys->fp->voice_detected) {continue;}
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(

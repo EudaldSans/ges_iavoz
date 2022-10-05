@@ -22,7 +22,7 @@ limitations under the License.
 #include <string.h>
 #include <stdio.h>
 
-#define NOISE_T     4
+#define NOISE_T     3
 #define SPEECH_T    16
 #define TRANS_T     4
 
@@ -134,7 +134,7 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
         }
     }
 
-    int32_t STP = 0, ZCR = 0, total_samples = 0;
+    int32_t STP = 0, ZCR = 0;
     const float p = 0.8;
 
     // Any slices that need to be filled in with feature data have their
@@ -179,30 +179,11 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
                 new_slice_data, &num_samples_read, &STP);
             
-            // printf("ZCR: %5d\t STP: %5d\tNSTP: %05.2f\n", ZCR, STP, fp->NSTP);
             UpdateState(fp, STP, ZCR);
-            fp->NSTP = (1-p)*fp->NSTP + p*STP;
             
             if (generate_status != kTfLiteOk) {return generate_status;}         
         }
     }
-
-    
-
-    // UpdateState(fp, STP, ZCR);
-
-    // if (is_first_run_) {
-    //     is_first_run_ = false;
-    //     fp->NSTP = STP / (fp->ms->kFeatureSliceCount - slices_to_keep);
-    //     return kTfLiteOk;
-    // }
-
-    // if (STP < 1.2*fp->NSTP && (20 < ZCR && ZCR < 80)){
-    //     fp->voice_detected = false;
-    //     fp->NSTP = (1-p)*fp->NSTP + p*STP;
-    // } else {
-    //     fp->voice_detected = true;
-    // }
 
     return kTfLiteOk;
 }
@@ -247,6 +228,8 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
     }
     
     FrontendOutput frontend_output = FrontendProcessSamples(&(fp->frontend_state), frontend_input, input_size, num_samples_read);
+    int8_t max_bank = 0;
+    int16_t max_value = frontend_output.values[0];
 
     for (size_t i = 0; i < frontend_output.size; ++i) {
     // These scaling values are derived from those used in input_data.py in the
@@ -271,18 +254,23 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
         
         if (value < -128) {value = -128;}
         if (value > 127) {value = 127;}
+        if (frontend_output.values[i] > max_value) {
+            max_bank = i;
+            max_value = frontend_output.values[i];
+        }
         
         output[i] = value;
         *STP += frontend_output.values[i];
     }
 
+    printf("Max value of %d in bank %d/%d\n", max_value, max_bank, frontend_output.size);
     *STP /= frontend_output.size;
 
     return kTfLiteOk;
 }
 
 void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
-    bool lld = STP > 55 && (625 < ZCR && ZCR < 1750);
+    bool lld = (STP > fp->NSTP) && (550 < ZCR && ZCR < 1900);
 
     switch (fp->current_state) {
         case STATE_INIT:
@@ -294,7 +282,7 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
             else {
                 fp->current_state = STATE_NOISE;
                 fp->NSTP /= TRANS_T;
-                ESP_LOGI(TAG, "State Noise");
+                // ESP_LOGI(TAG, "STATE_INIT -> STATE_NOISE, start NSTP: %f", fp->NSTP);
             }
 
             return;
@@ -305,9 +293,11 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
             if (lld) {
                 fp->current_state = STATE_TO_SPEECH;
                 fp->n_trans = NOISE_T;
-                // ESP_LOGI(TAG, "State to speech");
-            } else {
-                float p = 0.7;
+                // ESP_LOGI(TAG, "STATE_NOISE -> STATE_TO_SPEECH\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
+            } else if (STP < 2.3 * fp->NSTP) {
+                float p = 0.8;
+                if (STP > fp->NSTP) p = 0.95;
+
                 fp->NSTP = (1 - p)*fp->NSTP + p*STP;
             }
 
@@ -316,12 +306,12 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
         case STATE_TO_SPEECH:
             if (!lld) {
                 fp->current_state = STATE_NOISE;
-                // ESP_LOGI(TAG, "State noise");
+                // ESP_LOGI(TAG, "STATE_TO_SPEECH -> STATE_NOISE\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
             }
             else if (fp->n_trans > 0) {fp->n_trans--;}
             else {
                 fp->current_state = STATE_SPEECH;
-                ESP_LOGI(TAG, "State speech");
+                // ESP_LOGI(TAG, "STATE_TO_SPEECH -> STATE_SPEECH\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
             }
             return;
 
@@ -331,7 +321,7 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
             if (!lld) {
                 fp->current_state = STATE_TO_NOISE;
                 fp->n_trans = SPEECH_T;
-                // ESP_LOGI(TAG, "State to noise");
+                // ESP_LOGI(TAG, "STATE_TO_NOISE -> STATE_NOISE\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
             }
 
             return;
@@ -339,12 +329,12 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
         case STATE_TO_NOISE:
             if (lld) {
                 fp->current_state = STATE_SPEECH;
-                // ESP_LOGI(TAG, "State speech");
+                // ESP_LOGI(TAG, "STATE_TO_NOISE -> STATE_SPEECH\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
             }
             else if (fp->n_trans > 0) {fp->n_trans--;}
             else {
                 fp->current_state = STATE_NOISE;
-                ESP_LOGI(TAG, "State noise");
+                // ESP_LOGI(TAG, "STATE_TO_NOISE -> STATE_NOISE\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
             }
 
             return;

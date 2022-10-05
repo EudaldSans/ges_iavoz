@@ -136,7 +136,7 @@ class RecognizeCommands {
                              int32_t average_window_duration_ms = 500,
                              uint8_t detection_threshold = 175,
                              int32_t suppression_ms = 500,
-                             int32_t minimum_count = 2);
+                             int32_t minimum_count = 1);
 
   // Call this with the results of running a model on sample data.
   TfLiteStatus ProcessLatestResults(const TfLiteTensor* latest_results,
