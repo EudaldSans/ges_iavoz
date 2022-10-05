@@ -31,8 +31,11 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
         return false;
     }
 
+    ESP_LOGI(TAG, "Creating error reporter");
     sys->error_reporter = new tflite::MicroErrorReporter();
+    if (!sys->error_reporter) {ESP_LOGE(TAG, "Could not create error reporter");}
 
+    ESP_LOGI(TAG, "Adding operations to op resolver");
     sys->micro_op_resolver = new tflite::MicroMutableOpResolver<6>(sys->error_reporter);
     if (sys->micro_op_resolver->AddDepthwiseConv2D() != kTfLiteOk) {
         ESP_LOGE(TAG, "Could not add deppth wise conv 2D layer");
@@ -59,8 +62,10 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
         return false;
     }
 
+    ESP_LOGI(TAG, "Creating micro interpreter");
     sys->interpreter = new tflite::MicroInterpreter(sys->model, *(sys->micro_op_resolver), sys->tensor_arena, g_model_len, sys->error_reporter);
 
+    ESP_LOGI(TAG, "Allocating tensors");
     TfLiteStatus allocate_status = sys->interpreter->AllocateTensors();
     if (allocate_status != kTfLiteOk) {
         ESP_LOGE(TAG, "AllocateTensors() failed");
@@ -194,7 +199,7 @@ void IAVoz_System_Task ( void * vParam ) {
         bool is_new_command = false;
         
         // continue;
-        if (!sys->fp->voice_detected) {continue;}
+        // if (!sys->fp->voice_detected) {continue;}
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
             output, current_time, &found_command, &score, &is_new_command, &found_index);

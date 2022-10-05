@@ -190,7 +190,7 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
                 if (12 < sample && sample < 19) {mid_band_power += new_slice_data[sample];}
             }
     
-            UpdateState(fp, STP, ZCR, max_bank, low_band_power, mid_band_power);
+            // UpdateState(fp, STP, ZCR, max_bank, low_band_power, mid_band_power);
             
             if (generate_status != kTfLiteOk) {return generate_status;}         
         }
