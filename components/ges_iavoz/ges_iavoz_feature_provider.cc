@@ -22,9 +22,9 @@ limitations under the License.
 #include <string.h>
 #include <stdio.h>
 
-#define NOISE_T     3
-#define SPEECH_T    16
-#define TRANS_T     4
+#define NOISE_T     4
+#define SPEECH_T    8
+#define TRANS_T     10
 
 static const char *TAG = "IAVOZ_FP";
 
@@ -32,7 +32,7 @@ static const char *TAG = "IAVOZ_FP";
 
 TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp );
 TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP);
-void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR);
+void UpdateState (IAVoz_FeatureProvider_t * fp, float STP, float ZCR, uint8_t max_bank, int16_t low_band_power, int16_t mid_band_power);
 
 bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelSettings_t * ms )
 {
@@ -134,9 +134,6 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
         }
     }
 
-    int32_t STP = 0, ZCR = 0;
-    const float p = 0.8;
-
     // Any slices that need to be filled in with feature data have their
     // appropriate audio data pulled, and features calculated for that slice.
     if (slices_needed > 0) {
@@ -146,27 +143,27 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             int16_t* audio_samples = nullptr;
             int audio_samples_size = 0;
             int slice_average = 0;
-            STP = 0;
-            ZCR = 0;
+            float STP = 0;
+            float ZCR = 0;
             
             // TODO(petewarden): Fix bug that leads to non-zero slice_start_ms
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
                             &audio_samples);
 
-            for (uint16_t sample = 0; sample < audio_samples_size; sample++) {
-                slice_average += audio_samples[sample];
-            }
+            // for (uint16_t sample = 0; sample < audio_samples_size; sample++) {
+            //     slice_average += audio_samples[sample];
+            // }
             
-            slice_average /= audio_samples_size;
+            // slice_average /= audio_samples_size;
 
             for (uint16_t sample = 1; sample < audio_samples_size; sample++) {
-                if ((audio_samples[sample - 1] - slice_average) * (audio_samples[sample] - slice_average) < 0) {
+                if ((audio_samples[sample - 1]) * (audio_samples[sample]) < 0) {
                     ZCR++;
                 }
             }
 
-            ZCR = ZCR * 31.25; // Zero crossing rate each 1s
+            ZCR = ZCR * 10.42; // Zero crossing rate each 1s
 
             if (audio_samples_size < fp->ms-> kMaxAudioSampleSize) {
                 ESP_LOGE(TAG, "Audio data size %d too small, want %d", audio_samples_size, fp->ms->kMaxAudioSampleSize);
@@ -179,7 +176,21 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
                 new_slice_data, &num_samples_read, &STP);
             
-            UpdateState(fp, STP, ZCR);
+            int8_t max_bank = 0;
+            int16_t max_value = new_slice_data[0];
+            int32_t low_band_power = 0;
+            int32_t mid_band_power = 0;
+            for (uint8_t sample = 1; sample < fp->ms->kFeatureSliceSize; sample++) {
+                if (new_slice_data[sample] > max_value) {
+                    max_bank = sample;
+                    max_value = new_slice_data[sample];
+                }
+
+                if (6 < sample && sample < 13) {low_band_power += new_slice_data[sample];}
+                if (12 < sample && sample < 19) {mid_band_power += new_slice_data[sample];}
+            }
+    
+            UpdateState(fp, STP, ZCR, max_bank, low_band_power, mid_band_power);
             
             if (generate_status != kTfLiteOk) {return generate_status;}         
         }
@@ -217,7 +228,7 @@ TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp )
     return kTfLiteOk;
 }
 
-TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP) {
+TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, float* STP) {
     const int16_t* frontend_input;
     static bool g_is_first_time = true;
     if (g_is_first_time) {
@@ -228,8 +239,6 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
     }
     
     FrontendOutput frontend_output = FrontendProcessSamples(&(fp->frontend_state), frontend_input, input_size, num_samples_read);
-    int8_t max_bank = 0;
-    int16_t max_value = frontend_output.values[0];
 
     for (size_t i = 0; i < frontend_output.size; ++i) {
     // These scaling values are derived from those used in input_data.py in the
@@ -254,27 +263,36 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
         
         if (value < -128) {value = -128;}
         if (value > 127) {value = 127;}
-        if (frontend_output.values[i] > max_value) {
-            max_bank = i;
-            max_value = frontend_output.values[i];
-        }
         
         output[i] = value;
         *STP += frontend_output.values[i];
     }
 
-    printf("Max value of %d in bank %d/%d\n", max_value, max_bank, frontend_output.size);
     *STP /= frontend_output.size;
 
     return kTfLiteOk;
 }
 
-void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
-    bool lld = (STP > fp->NSTP) && (550 < ZCR && ZCR < 1900);
+void UpdateState (IAVoz_FeatureProvider_t * fp, float STP, float ZCR, uint8_t max_bank, int16_t low_band_power, int16_t mid_band_power) {
+
+    bool ed = STP > 1.2 * fp->NSTP;
+    bool bwd = (2 < max_bank && max_bank < 21) || (low_band_power > 0 && mid_band_power > 0);
+    bool zcd = 250 < ZCR && ZCR < 800;
+
+
+    bool lld = ed && bwd;
+    // printf("%d %d %d | %d\t", ed,bwd,zcd,lld);
+    // printf("STP = %3.2f\t", STP);
+    // printf("NSTP = %3.2f\t", fp->NSTP);
+    // printf("ZCR = %3.2f\t", ZCR);
+    // printf("max_bank = %2d\t", max_bank);
+    // printf("lbp = %4d\t", low_band_power);
+    // printf("mbp = %4d\t", mid_band_power);
+    // printf("\n");
+    bool sld = ed && zcd;
 
     switch (fp->current_state) {
         case STATE_INIT:
-            // ESP_LOGI(TAG, "State Init");
             fp->voice_detected = false;
             fp->NSTP += STP;
 
@@ -282,7 +300,7 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
             else {
                 fp->current_state = STATE_NOISE;
                 fp->NSTP /= TRANS_T;
-                // ESP_LOGI(TAG, "STATE_INIT -> STATE_NOISE, start NSTP: %f", fp->NSTP);
+                ESP_LOGI(TAG, "STATE_INIT -> STATE_NOISE");
             }
 
             return;
@@ -293,12 +311,11 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
             if (lld) {
                 fp->current_state = STATE_TO_SPEECH;
                 fp->n_trans = NOISE_T;
-                // ESP_LOGI(TAG, "STATE_NOISE -> STATE_TO_SPEECH\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
-            } else if (STP < 2.3 * fp->NSTP) {
+                // ESP_LOGI(TAG, "STATE_NOISE -> STATE_TO_SPEECH");
+            } else {
                 float p = 0.8;
-                if (STP > fp->NSTP) p = 0.95;
-
-                fp->NSTP = (1 - p)*fp->NSTP + p*STP;
+                if (STP > 2.3 * fp->NSTP) {p = 0.15;}
+                fp->NSTP = p*fp->NSTP + (1 - p)*STP;
             }
 
             return;
@@ -306,12 +323,12 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
         case STATE_TO_SPEECH:
             if (!lld) {
                 fp->current_state = STATE_NOISE;
-                // ESP_LOGI(TAG, "STATE_TO_SPEECH -> STATE_NOISE\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
+                // ESP_LOGI(TAG, "STATE_TO_SPEECH -> STATE_NOISE");
             }
             else if (fp->n_trans > 0) {fp->n_trans--;}
             else {
                 fp->current_state = STATE_SPEECH;
-                // ESP_LOGI(TAG, "STATE_TO_SPEECH -> STATE_SPEECH\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
+                ESP_LOGI(TAG, "STATE_TO_SPEECH -> STATE_SPEECH");
             }
             return;
 
@@ -321,7 +338,7 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
             if (!lld) {
                 fp->current_state = STATE_TO_NOISE;
                 fp->n_trans = SPEECH_T;
-                // ESP_LOGI(TAG, "STATE_TO_NOISE -> STATE_NOISE\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
+                // ESP_LOGI(TAG, "STATE_SPEECH -> STATE_TO_NOISE");
             }
 
             return;
@@ -329,12 +346,12 @@ void UpdateState (IAVoz_FeatureProvider_t * fp, int32_t STP, int32_t ZCR) {
         case STATE_TO_NOISE:
             if (lld) {
                 fp->current_state = STATE_SPEECH;
-                // ESP_LOGI(TAG, "STATE_TO_NOISE -> STATE_SPEECH\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
+                // ESP_LOGI(TAG, "STATE_TO_NOISE -> STATE_SPEECH");
             }
             else if (fp->n_trans > 0) {fp->n_trans--;}
             else {
                 fp->current_state = STATE_NOISE;
-                // ESP_LOGI(TAG, "STATE_TO_NOISE -> STATE_NOISE\tSTP: %5d, ZCR: %5d, NSTP: %5.2f", STP, ZCR, fp->NSTP);
+                ESP_LOGI(TAG, "STATE_TO_NOISE -> STATE_NOISE");
             }
 
             return;

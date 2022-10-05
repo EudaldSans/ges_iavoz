@@ -193,7 +193,7 @@ void IAVoz_System_Task ( void * vParam ) {
         uint8_t score = 0;
         bool is_new_command = false;
         
-        continue;
+        // continue;
         if (!sys->fp->voice_detected) {continue;}
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
@@ -205,6 +205,9 @@ void IAVoz_System_Task ( void * vParam ) {
 
         if (is_new_command) {
             sys->cb(found_command, sys->fp->NSTP);
+        } else if (!sys->recognizer->activation) {
+            sys->fp->voice_detected = false;
+            sys->fp->current_state = STATE_NOISE;
         }
 
     }
