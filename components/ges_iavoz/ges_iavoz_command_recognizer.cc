@@ -38,7 +38,7 @@ RecognizeCommands::RecognizeCommands(tflite::ErrorReporter* error_reporter,
 TfLiteStatus RecognizeCommands::ProcessLatestResults(
             const TfLiteTensor* latest_results, const int32_t current_time_ms,
             IAVOZ_KEY_t* found_command, uint8_t* score, bool* is_new_command, 
-            uint8_t* found_index, int32_t STP) {
+            uint8_t* found_index) {
     if ((latest_results->dims->size != 2) || (latest_results->dims->data[0] != 1) || (latest_results->dims->data[1] != kCategoryCount)) {
         TF_LITE_REPORT_ERROR(error_reporter_,
             "The results for recognition should contain %d elements, but there are %d in an %d-dimensional shape",
@@ -122,7 +122,6 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     //To calculate % threshold
     std::cout << "\t " << kCategoryLabels[i] << ": " << 100*(((float)average_scores[i]) / ((float)253)) << "% ";
     std::cout << "\t top label: " << current_top_label << " " << 100*((float)current_top_score / (float)253) << "%";
-    std::cout << "\t STP: " << STP;
     std::cout << std::endl;
 
     *is_new_command = false;
@@ -138,7 +137,6 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     if (current_top_label == previous_top_label_)   {return kTfLiteOk;}
     if (time_since_last_top < suppression_ms_)      {return kTfLiteOk;}
     if (high_probability_samples != 1)              {return kTfLiteOk;}
-    if (STP < 30)                                   {return kTfLiteOk;}
 
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
         activation = true;
