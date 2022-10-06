@@ -12,10 +12,13 @@
 #include "tensorflow/lite/experimental/microfrontend/lib/frontend.h"
 #include "tensorflow/lite/experimental/microfrontend/lib/frontend_util.h"
 
+#include <fvad.h>
+
 typedef struct {
     int8_t * feature_data;
     IAVoz_ModelSettings_t * ms;
     struct FrontendState frontend_state;
+    Fvad* vad;
 } IAVoz_FeatureProvider_t;
 
 // GES API

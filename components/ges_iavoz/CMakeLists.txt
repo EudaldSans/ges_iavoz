@@ -12,7 +12,7 @@ idf_component_register( SRCS
                             "ringbuf.c"
                         INCLUDE_DIRS "."
 
-                        REQUIRES "esp-nn" tflite-lib
+                        REQUIRES "esp-nn" tflite-lib libfvad
                     )
 
 # register_component()

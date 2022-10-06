@@ -25,23 +25,19 @@ limitations under the License.
 static const char *TAG = "IAVOZ_FP";
 
 
-
 TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp );
 TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP);
 
 
-bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelSettings_t * ms )
-{
+bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelSettings_t * ms ) {
     IAVoz_FeatureProvider_t * fp = (IAVoz_FeatureProvider_t *) malloc (sizeof(IAVoz_FeatureProvider_t));
     (*fpptr) = fp;
-    if ( !fp )
-    {
+    if ( !fp ) {
         ESP_LOGE(TAG, "Error Allocating Feature Provider struct");
         return false;
     }
 
-    if ( !ms )
-    {
+    if ( !ms ) {
         ESP_LOGE(TAG, "Error Reading Model Settings");
         return false;
     }
@@ -49,9 +45,14 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
     fp->ms = ms;
 
     fp->feature_data = (int8_t *) malloc(fp->ms->kFeatureElementCount);
-    if ( !fp->feature_data )
-    {
+    if ( !fp->feature_data ) {
         ESP_LOGE(TAG, "Error Allocating Feature Provider buffer");
+        return false;
+    }
+
+    fp->vad = fvad_new();
+    if (!fp->vad) {
+        ESP_LOGE(TAG, "Error allocating Fvad");
         return false;
     }
 
@@ -65,20 +66,16 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
 
 bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp )
 {
-    if ( !fp )
-    {
+    if ( !fp ) {
         ESP_LOGE(TAG, "Failed to de-init Feature Provider");
         return false;
     }
 
-    if ( !fp->feature_data )
-    {
-        ESP_LOGW(TAG, "Null feature data");
-    }
-    else
-    {
-        free(fp->feature_data);
-    }
+    if ( !fp->feature_data ) {ESP_LOGW(TAG, "Null feature data");} 
+    else {free(fp->feature_data);}
+
+    if (!fp->vad) {ESP_LOGW(TAG, "Null Fvad");}
+    else {fvad_free(fp->vad);}
 
     free(fp);
     ESP_LOGI(TAG, "Feature Provider de-initialized");
@@ -144,16 +141,27 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             const int32_t slice_start_ms = (new_step * fp->ms->kFeatureSliceStrideMs);
             int16_t* audio_samples = nullptr;
             int audio_samples_size = 0;
+            int vadres;
 
             // TODO(petewarden): Fix bug that leads to non-zero slice_start_ms
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
                             &audio_samples);
 
-            if (audio_samples_size < fp->ms-> kMaxAudioSampleSize) {
+            if (audio_samples_size < fp->ms->kMaxAudioSampleSize) {
                 ESP_LOGE(TAG, "Audio data size %d too small, want %d", audio_samples_size, fp->ms->kMaxAudioSampleSize);
                 return kTfLiteError;
             }
+
+            vadres = fvad_process(fp->vad, audio_samples, audio_samples_size);
+
+            if (vadres < 0) {
+                ESP_LOGE(TAG, "fvad process faied with error: %d", vadres);
+                return kTfLiteApplicationError;
+            }
+
+            vadres = !!vadres; // Make sure it is 0 or 1
+            if (vadres) {ESP_LOGI(TAG, "Voice detected!");}
 
             int8_t* new_slice_data = fp->feature_data + (new_slice * fp->ms->kFeatureSliceSize);
             size_t num_samples_read;
