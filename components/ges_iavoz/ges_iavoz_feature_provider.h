@@ -19,6 +19,8 @@ typedef struct {
     IAVoz_ModelSettings_t * ms;
     struct FrontendState frontend_state;
     Fvad* vad;
+    bool* voices_in_frame;
+    uint8_t voices_write_pointer;
 } IAVoz_FeatureProvider_t;
 
 // GES API
@@ -27,8 +29,8 @@ bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp );
 
 
 // TF API
-TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData ( IAVoz_FeatureProvider_t * fp, IAVoz_AudioProvider_t * ap, int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices);
-TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read);
+TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData ( IAVoz_FeatureProvider_t * fp, IAVoz_AudioProvider_t * ap, int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices, int32_t* STP);
+TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP);
 
 
 

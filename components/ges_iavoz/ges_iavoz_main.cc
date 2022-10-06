@@ -2,6 +2,8 @@
 #include "ges_iavoz_audio_provider.h"
 #include <sys/_stdint.h>
 
+#define MAX_STP_SAMPLES 3
+
 const char * TAG = "IAVOZ_SYS";
 
 constexpr int kTensorArenaSize = 30 * 1024;
@@ -161,13 +163,17 @@ bool IAVoz_System_DeInit ( IAVoz_System_t * sys ) {
 void IAVoz_System_Task ( void * vParam ) {
     IAVoz_System_t * sys = (IAVoz_System_t *) vParam;
     IAVoz_ModelSettings_t * ms = sys->ms;
-    
+
+    int32_t previous_time = 0;
+    int32_t STP_buffer[MAX_STP_SAMPLES];
+    uint8_t STP_position = 0;
+
     for (;;) {
         const int32_t current_time = LatestAudioTimestamp(sys->ap);
         int how_many_new_slices = 0;
 
-        TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices);
-
+        TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices, STP_buffer + STP_position);
+        STP_position = (STP_position + 1) % MAX_STP_SAMPLES;
         if (feature_status != kTfLiteOk) {continue;}
         previous_time = current_time;
 
@@ -186,6 +192,12 @@ void IAVoz_System_Task ( void * vParam ) {
         uint8_t found_index;
         uint8_t score = 0;
         bool is_new_command = false;
+
+        int32_t STP = 0;
+        for (int i = 0; i < MAX_STP_SAMPLES; i++) {
+            STP += STP_buffer[i];
+        }
+        STP /= MAX_STP_SAMPLES;
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
             output, current_time, &found_command, &score, &is_new_command, &found_index);

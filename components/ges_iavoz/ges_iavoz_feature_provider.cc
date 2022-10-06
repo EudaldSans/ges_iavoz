@@ -26,7 +26,7 @@ static const char *TAG = "IAVOZ_FP";
 
 
 TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp );
-TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read);
+TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP);
 
 
 bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelSettings_t * ms ) {
@@ -56,7 +56,16 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
         return false;
     }
 
+    fp->voices_in_frame = (bool*) malloc(sizeof(bool)*fp->ms->kFeatureSliceCount);
+    if (!fp->voices_in_frame) {
+        ESP_LOGE(TAG, "Error allocating space for voices in frame array");
+        return false;
+    }
+
+    fp->voices_write_pointer = 0;
+
     memset(fp->feature_data, 0, fp->ms->kFeatureElementCount);
+    memset(fp->voices_in_frame, 0, sizeof(bool)*fp->ms->kFeatureSliceCount);
 
     InitializeMicroFeatures( fp );
 
@@ -64,8 +73,7 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
     return true;
 }
 
-bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp )
-{
+bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp ) {
     if ( !fp ) {
         ESP_LOGE(TAG, "Failed to de-init Feature Provider");
         return false;
@@ -77,6 +85,9 @@ bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp )
     if (!fp->vad) {ESP_LOGW(TAG, "Null Fvad");}
     else {fvad_free(fp->vad);}
 
+    if (!fp->voices_in_frame) {ESP_LOGW(TAG, "Null voices in frame");}
+    else {free(fp->voices_in_frame);}
+
     free(fp);
     ESP_LOGI(TAG, "Feature Provider de-initialized");
 
@@ -84,7 +95,7 @@ bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp )
 }
 
 TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t * fp, IAVoz_AudioProvider_t * ap, 
-        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices) {
+        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices, int32_t* STP) {
 
     static bool is_first_run_ = true;
     // Quantize the time into steps as long as each window stride, so we can
@@ -163,11 +174,14 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             vadres = !!vadres; // Make sure it is 0 or 1
             if (vadres) {ESP_LOGI(TAG, "Voice detected!");}
 
+            fp->voices_in_frame[fp->voices_write_pointer] = vadres;
+            fp->voices_write_pointer = (fp->voices_write_pointer + 1) % fp->ms->kFeatureSliceCount;
+
             int8_t* new_slice_data = fp->feature_data + (new_slice * fp->ms->kFeatureSliceSize);
             size_t num_samples_read;
             TfLiteStatus generate_status = GenerateMicroFeatures(
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
-                new_slice_data, &num_samples_read);
+                new_slice_data, &num_samples_read, STP);
             
             if (generate_status != kTfLiteOk) {return generate_status;}
         }
@@ -205,7 +219,7 @@ TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp )
     return kTfLiteOk;
 }
 
-TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read) {
+TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP) {
     const int16_t* frontend_input;
     static bool g_is_first_time = true;
     if (g_is_first_time) {
@@ -217,6 +231,8 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
     
     FrontendOutput frontend_output = FrontendProcessSamples(&(fp->frontend_state), frontend_input, input_size, num_samples_read);
 
+
+    *STP = 0;
     for (size_t i = 0; i < frontend_output.size; ++i) {
     // These scaling values are derived from those used in input_data.py in the
     // training pipeline.
@@ -242,7 +258,10 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
         if (value > 127) {value = 127;}
         
         output[i] = value;
+        *STP += value;
     }
+
+    *STP /= frontend_output.size;
 
     return kTfLiteOk;
 }
