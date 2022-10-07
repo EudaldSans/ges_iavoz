@@ -57,6 +57,7 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
     }
 
     fvad_set_sample_rate(fp->vad, fp->ms->kAudioSampleFrequency);
+    fvad_set_mode(fp->vad, 2);
 
     fp->voices_in_frame = (bool*) malloc(sizeof(bool)*fp->ms->kFeatureSliceCount);
     if (!fp->voices_in_frame) {
@@ -175,7 +176,6 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             }
 
             vadres = !!vadres; // Make sure it is 0 or 1
-            if (vadres) {ESP_LOGI(TAG, "Voice detected!");}
 
             fp->voices_in_frame[fp->voices_write_pointer] = vadres;
             fp->voices_write_pointer = (fp->voices_write_pointer + 1) % fp->ms->kFeatureSliceCount;
@@ -261,7 +261,7 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
         if (value > 127) {value = 127;}
         
         output[i] = value;
-        *STP += value;
+        *STP += frontend_output.values[i];
     }
 
     *STP /= frontend_output.size;

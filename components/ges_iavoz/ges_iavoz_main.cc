@@ -198,6 +198,23 @@ void IAVoz_System_Task ( void * vParam ) {
             STP += STP_buffer[i];
         }
         STP /= MAX_STP_SAMPLES;
+        
+        uint8_t voice_in_frame = 0;
+        uint8_t voice_in_bof = 0;
+        uint8_t voice_in_eof = 0;
+        for (uint16_t sample = 0; sample < sys->fp->ms->kFeatureSliceCount; sample++) {
+            if (sample < sys->fp->ms->kFeatureSliceCount/4) {voice_in_bof += sys->fp->voices_in_frame[sample];}
+            if (sample > 3*sys->fp->ms->kFeatureSliceCount/4) {voice_in_eof += sys->fp->voices_in_frame[sample];}
+
+            voice_in_frame += sys->fp->voices_in_frame[sample];
+        }
+
+        ESP_LOGD(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        
+        if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
+        if (voice_in_eof > 2*voice_in_frame/3) {continue;}
+        if (voice_in_bof > 2*voice_in_frame/3) {continue;}
+        if (STP < 50) {continue;}
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
             output, current_time, &found_command, &score, &is_new_command, &found_index);
