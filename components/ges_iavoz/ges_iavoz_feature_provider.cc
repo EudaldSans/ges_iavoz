@@ -56,6 +56,8 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
         return false;
     }
 
+    fvad_set_sample_rate(fp->vad, fp->ms->kAudioSampleFrequency);
+
     fp->voices_in_frame = (bool*) malloc(sizeof(bool)*fp->ms->kFeatureSliceCount);
     if (!fp->voices_in_frame) {
         ESP_LOGE(TAG, "Error allocating space for voices in frame array");
@@ -164,7 +166,8 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
                 return kTfLiteError;
             }
 
-            vadres = fvad_process(fp->vad, audio_samples, audio_samples_size);
+            // fvad only accepts frames of 30ms (480 samples @ 16kHz)
+            vadres = fvad_process(fp->vad, audio_samples, fp->ms->kFeatureSliceDurationMs*fp->ms->kAudioSampleFrequency/1000);
 
             if (vadres < 0) {
                 ESP_LOGE(TAG, "fvad process faied with error: %d", vadres);
