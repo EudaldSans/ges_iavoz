@@ -203,10 +203,11 @@ void IAVoz_System_Task ( void * vParam ) {
         uint8_t voice_in_bof = 0;
         uint8_t voice_in_eof = 0;
         for (uint16_t sample = 0; sample < sys->fp->ms->kFeatureSliceCount; sample++) {
-            if (sample < sys->fp->ms->kFeatureSliceCount/4) {voice_in_bof += sys->fp->voices_in_frame[sample];}
-            if (sample > 3*sys->fp->ms->kFeatureSliceCount/4) {voice_in_eof += sys->fp->voices_in_frame[sample];}
+            uint16_t position = (sample + sys->fp->voices_write_pointer) % sys->fp->ms->kFeatureSliceCount;
+            if (sample < sys->fp->ms->kFeatureSliceCount/4) {voice_in_bof += sys->fp->voices_in_frame[position];}
+            if (sample > 3*sys->fp->ms->kFeatureSliceCount/4) {voice_in_eof += sys->fp->voices_in_frame[position];}
 
-            voice_in_frame += sys->fp->voices_in_frame[sample];
+            voice_in_frame += sys->fp->voices_in_frame[position];
         }
 
         ESP_LOGD(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
