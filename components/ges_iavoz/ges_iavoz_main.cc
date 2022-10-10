@@ -1,6 +1,9 @@
 #include "ges_iavoz_main.h"
-#include "ges_iavoz_audio_provider.h"
+
 #include <sys/_stdint.h>
+#include "ges_iavoz_audio_provider.h"
+
+#include "ges_iavoz_command_responder.h"
 
 #define MAX_STP_SAMPLES 3
 
@@ -105,6 +108,8 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
     sys->previous_time = 0;
 
     sys->is_sys_started = false;
+
+    initCommandResponder();
 
     return true;
 }
@@ -226,6 +231,7 @@ void IAVoz_System_Task ( void * vParam ) {
 
         if (is_new_command) {
             sys->cb(found_command, STP);
+            RespondToCommand(found_command);
         }
 
     }
