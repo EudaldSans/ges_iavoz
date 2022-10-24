@@ -135,6 +135,7 @@ class RecognizeCommands {
   explicit RecognizeCommands(tflite::ErrorReporter* error_reporter,
                              int32_t average_window_duration_ms = 500,
                              uint8_t detection_threshold = 175,
+                             uint8_t weak_detection_threshold = 100,
                              int32_t suppression_ms = 500,
                              int32_t minimum_count = 2);
 
@@ -150,14 +151,19 @@ class RecognizeCommands {
   tflite::ErrorReporter* error_reporter_;
   int32_t average_window_duration_ms_;
   uint8_t detection_threshold_;
+  uint8_t weak_detection_threshold_;
   int32_t suppression_ms_;
   int32_t minimum_count_;
 
   // Working variables
   PreviousResultsQueue previous_results_;
   IAVOZ_KEY_t previous_top_label_;
+  uint8_t total_consecutive_tops_;
+  int32_t first_top_time_;
+  int32_t accumulated_probability_;
   int32_t previous_top_label_time_;
 
+  bool weak_activation;
   bool activation;
 };
 

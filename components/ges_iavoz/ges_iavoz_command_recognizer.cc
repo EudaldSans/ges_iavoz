@@ -22,17 +22,26 @@ limitations under the License.
 RecognizeCommands::RecognizeCommands(tflite::ErrorReporter* error_reporter,
                                     int32_t average_window_duration_ms,
                                     uint8_t detection_threshold,
+                                    uint8_t weak_detection_threshold,
                                     int32_t suppression_ms,
                                     int32_t minimum_count)
         : error_reporter_(error_reporter),
         average_window_duration_ms_(average_window_duration_ms),
         detection_threshold_(detection_threshold),
+        weak_detection_threshold_(weak_detection_threshold),
         suppression_ms_(suppression_ms),
         minimum_count_(minimum_count),
-        previous_results_(error_reporter) {
+        previous_results_(error_reporter){
+
     previous_top_label_ = IAVOZ_KEY_NULL;
+    total_consecutive_tops_ = 0;
+    accumulated_probability_ = 0;
+
+    first_top_time_ = std::numeric_limits<int32_t>::min();
     previous_top_label_time_ = std::numeric_limits<int32_t>::min();
-    activation = false;
+
+    activation = false; 
+    weak_activation = false;
 }
 
 TfLiteStatus RecognizeCommands::ProcessLatestResults(
@@ -129,19 +138,43 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     if (time_since_last_top >= 1750 && activation) {
         *is_new_command = false;
         activation = false;
+        weak_activation = false;
+
         previous_top_label_ = IAVOZ_KEY_NULL;
         previous_top_label_time_ = std::numeric_limits<int32_t>::min();
+
+        first_top_time_ = std::numeric_limits<int32_t>::min();
+        total_consecutive_tops_ = 0;
+        accumulated_probability_ = 0;
     }
 
-    if (current_top_score < detection_threshold_)   {return kTfLiteOk;}
-    if (current_top_label == previous_top_label_)   {return kTfLiteOk;}
-    if (time_since_last_top < suppression_ms_)      {return kTfLiteOk;}
-    if (high_probability_samples != 1)              {return kTfLiteOk;}
+    if (current_top_label != previous_top_label_) {
+        first_top_time_ = current_time_ms;
+        total_consecutive_tops_ = 1;
+        accumulated_probability_ = current_top_score;
+    } else {
+        total_consecutive_tops_ ++;
+        accumulated_probability_ += current_top_score;
+    }
+
+    int32_t accum_prob = accumulated_probability_/total_consecutive_tops_;
+
+    if (current_top_label == IAVOZ_KEY_NULL)            {return kTfLiteOk;}
+    if (time_since_last_top < suppression_ms_)          {return kTfLiteOk;}
+    if (high_probability_samples != 1)                  {return kTfLiteOk;}
+    if (current_top_score < detection_threshold_ || 
+        accum_prob < weak_detection_threshold_)         {return kTfLiteOk;}
+    // if (current_top_label == previous_top_label_)    {return kTfLiteOk;}
+    
 
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
+        if (current_top_score < detection_threshold_) {weak_activation = true;}
+        
         activation = true;
         previous_top_label_time_ = current_time_ms;
     } else if (current_top_label != IAVOZ_KEY_HEYLOLA && current_top_label != IAVOZ_KEY_NULL && activation) {
+        if (weak_activation && current_top_score < detection_threshold_) {return kTfLiteOk;}
+
         *is_new_command = true;
         activation = false;
         previous_top_label_time_ = std::numeric_limits<int32_t>::min();
