@@ -32,8 +32,11 @@ limitations under the License.
 #define GPIO_BUZZER_ENABLE      GPIO_NUM_1
 #define GPIO_RELE               GPIO_NUM_4
 #define GPIO_LED                GPIO_NUM_23
-// #define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE) | (1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED))
+#define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE) | (1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED))
 #define GPIO_OUTPUT_PIN_SEL     (1ULL<<GPIO_BUZZER_ENABLE)
+
+// #define BEEP
+// #define USE_LED
 
 
 uint32_t activations = 0;
@@ -57,37 +60,77 @@ void beep(void) {
 
 void enciende(void) {
     if (status == 1) return;
+
+#ifdef BEEP
 	gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // gpio_set_level(GPIO_LED, 1);
-    // gpio_set_level(GPIO_RELE, 1);
-	beep();
+#endif
+
+#ifdef USE_LED
+    gpio_set_level(GPIO_LED, 1);
+    gpio_set_level(GPIO_RELE, 1);
+#endif
+
+#ifdef BEEP
+    beep();
 	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
-    
+#endif    
     status = 1;
 }
 
 void apaga(void) {
     if (status == 0) return;
+
+#ifdef BEEP
 	gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // gpio_set_level(GPIO_RELE, 0);
-    // gpio_set_level(GPIO_LED, 0);
-	beep();
-	beep();
+#endif
+
+#ifdef USE_LED
+    gpio_set_level(GPIO_LED, 1);
+    gpio_set_level(GPIO_RELE, 1);
+#endif
+
+#ifdef BEEP
+    beep();
+    beep();
 	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
+#endif  
     
     status = 0;
 }
 
 void ayuda(void) {
+#ifdef BEEP
 	gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // gpio_set_level(GPIO_LED, !status);
-	beep();
-    // gpio_set_level(GPIO_LED, status);
-	beep();
-    // gpio_set_level(GPIO_LED, !status);
-	beep();
-    // gpio_set_level(GPIO_LED, status);
-	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
+#endif
+
+#ifdef USE_LED
+    gpio_set_level(GPIO_LED, !status);
+#endif
+
+#ifdef BEEP
+    beep();
+#endif
+
+#ifdef USE_LED
+    gpio_set_level(GPIO_LED, status);
+#endif
+
+#ifdef BEEP
+    beep();
+#endif 
+
+#ifdef USE_LED
+    gpio_set_level(GPIO_LED, !status);
+#endif
+
+#ifdef BEEP
+    beep();
+    gpio_set_level(GPIO_BUZZER_ENABLE, 0);
+#endif
+
+#ifdef USE_LED
+    gpio_set_level(GPIO_LED, status);
+#endif
 }
 
 // The default implementation writes out the name of the recognized command
@@ -105,6 +148,7 @@ void RespondToCommand(IAVOZ_KEY_t found_command) {
 }
 
 void initCommandResponder() {
+#ifdef USE_LED
 	//zero-initialize the config structure.
     gpio_config_t io_conf = {};
     //disable interrupt
@@ -120,6 +164,16 @@ void initCommandResponder() {
     //configure GPIO with the given settings
     gpio_config(&io_conf);
 
+    gpio_set_level(GPIO_BUZZER_ENABLE, 1);
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+
+	vTaskDelay(100/portTICK_RATE_MS);
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
+#endif
+#ifdef BEEP
 	// Prepare and then apply the LEDC PWM timer configuration
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_MODE,
@@ -142,19 +196,8 @@ void initCommandResponder() {
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 
-	gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // gpio_set_level(GPIO_LED, 1);
-    // Set duty to 50%
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-
-	vTaskDelay(100/portTICK_RATE_MS);
-	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
-    // gpio_set_level(GPIO_LED, 0);
-
-	// Set duty to 50%
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+    gpio_set_level(GPIO_LED, 1);
+    vTaskDelay(100/portTICK_RATE_MS);
+    gpio_set_level(GPIO_LED, 0);
+#endif
 }
