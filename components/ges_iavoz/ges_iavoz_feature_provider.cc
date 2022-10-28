@@ -22,12 +22,15 @@ limitations under the License.
 #include <string.h>
 #include <stdio.h>
 
+#define NOISE_T     4
+#define SPEECH_T    8
+#define TRANS_T     10
+
 static const char *TAG = "IAVOZ_FP";
 
 
 TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp );
 TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP);
-
 
 bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelSettings_t * ms ) {
     IAVoz_FeatureProvider_t * fp = (IAVoz_FeatureProvider_t *) malloc (sizeof(IAVoz_FeatureProvider_t));
@@ -72,12 +75,11 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
 
     InitializeMicroFeatures( fp );
 
-
     return true;
 }
 
 bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp ) {
-    if ( !fp ) {
+    if (!fp ) {
         ESP_LOGE(TAG, "Failed to de-init Feature Provider");
         return false;
     }
@@ -98,7 +100,7 @@ bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp ) {
 }
 
 TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t * fp, IAVoz_AudioProvider_t * ap, 
-        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices, int32_t* STP) {
+        int32_t last_time_in_ms, int32_t time_in_ms, int* how_many_new_slices) {
 
     static bool is_first_run_ = true;
     // Quantize the time into steps as long as each window stride, so we can
@@ -146,7 +148,6 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
         }
     }
 
-
     // Any slices that need to be filled in with feature data have their
     // appropriate audio data pulled, and features calculated for that slice.
     if (slices_needed > 0) {
@@ -157,6 +158,10 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             int audio_samples_size = 0;
             int vadres;
 
+            int slice_average = 0;
+            float STP = 0;
+            float ZCR = 0;
+            
             // TODO(petewarden): Fix bug that leads to non-zero slice_start_ms
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
@@ -184,9 +189,9 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             size_t num_samples_read;
             TfLiteStatus generate_status = GenerateMicroFeatures(
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
-                new_slice_data, &num_samples_read, STP);
-            
-            if (generate_status != kTfLiteOk) {return generate_status;}
+                new_slice_data, &num_samples_read, &STP);
+                    
+            if (generate_status != kTfLiteOk) {return generate_status;}         
         }
     }
 
@@ -222,7 +227,7 @@ TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp )
     return kTfLiteOk;
 }
 
-TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP) {
+TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, float* STP) {
     const int16_t* frontend_input;
     static bool g_is_first_time = true;
     if (g_is_first_time) {
@@ -268,4 +273,3 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
 
     return kTfLiteOk;
 }
-

@@ -48,6 +48,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
             const TfLiteTensor* latest_results, const int32_t current_time_ms,
             IAVOZ_KEY_t* found_command, uint8_t* score, bool* is_new_command, 
             uint8_t* found_index) {
+
     if ((latest_results->dims->size != 2) || (latest_results->dims->data[0] != 1) || (latest_results->dims->data[1] != kCategoryCount)) {
         TF_LITE_REPORT_ERROR(error_reporter_,
             "The results for recognition should contain %d elements, but there are %d in an %d-dimensional shape",
@@ -81,12 +82,13 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     const int64_t how_many_results = previous_results_.size();
     const int64_t earliest_time = previous_results_.front().time_;
     const int64_t samples_duration = current_time_ms - earliest_time;
-    if ((how_many_results < minimum_count_) || (samples_duration < (average_window_duration_ms_ / 4))) {
-        *found_command = previous_top_label_;
-        *score = 0;
-        *is_new_command = false;
-        return kTfLiteOk;
-    }
+    // if ((how_many_results < minimum_count_) || (samples_duration < (average_window_duration_ms_ / 4))) {
+    //     *found_command = previous_top_label_;
+    //     *score = 0;
+    //     *is_new_command = false;
+    //     printf("Too few results\n");
+    //     return kTfLiteOk;
+    // }
 
     // Calculate the average score across all the results in the window.
     int32_t average_scores[kCategoryCount];
@@ -159,25 +161,33 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
 
     int32_t accum_prob = accumulated_probability_/total_consecutive_tops_;
 
+    std::cout << "Accum prob: " << accum_prob << std::endl;
+
     if (current_top_label == IAVOZ_KEY_NULL)            {return kTfLiteOk;}
     if (time_since_last_top < suppression_ms_)          {return kTfLiteOk;}
     if (high_probability_samples != 1)                  {return kTfLiteOk;}
-    if (current_top_score < detection_threshold_ || 
+    if (current_top_score < detection_threshold_ && 
         accum_prob < weak_detection_threshold_)         {return kTfLiteOk;}
     // if (current_top_label == previous_top_label_)    {return kTfLiteOk;}
     
 
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
-        if (current_top_score < detection_threshold_) {weak_activation = true;}
+        if (current_top_score < detection_threshold_) {
+            weak_activation = true;
+            std::cout << "Weak ";
+        }
         
         activation = true;
         previous_top_label_time_ = current_time_ms;
+        std::cout << "Activated!" << std::endl; 
     } else if (current_top_label != IAVOZ_KEY_HEYLOLA && current_top_label != IAVOZ_KEY_NULL && activation) {
         if (weak_activation && current_top_score < detection_threshold_) {return kTfLiteOk;}
+        if (current_top_score < detection_threshold_) {std::cout << "Weak ";}
 
         *is_new_command = true;
         activation = false;
         previous_top_label_time_ = std::numeric_limits<int32_t>::min();
+        std::cout << "Commmand!" << std::endl; 
     }
 
     previous_top_label_ = current_top_label;
