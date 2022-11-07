@@ -35,7 +35,7 @@ limitations under the License.
 #define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE) | (1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED))
 #define GPIO_OUTPUT_PIN_SEL     (1ULL<<GPIO_BUZZER_ENABLE)
 
-// #define BEEP
+#define BEEP
 // #define USE_LED
 
 
@@ -196,8 +196,6 @@ void initCommandResponder() {
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 
-    gpio_set_level(GPIO_LED, 1);
-    vTaskDelay(100/portTICK_RATE_MS);
-    gpio_set_level(GPIO_LED, 0);
+    beep();
 #endif
 }
