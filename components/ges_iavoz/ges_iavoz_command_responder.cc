@@ -27,15 +27,15 @@ limitations under the License.
 #define LEDC_CHANNEL            LEDC_CHANNEL_0
 #define LEDC_DUTY_RES           LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
 #define LEDC_DUTY               (4095) // Set duty to 50%. ((2 ** 13) - 1) * 50% = 4095
-#define LEDC_FREQUENCY          (1500) // Frequency in Hertz. Set frequency at 5 kHz
+#define LEDC_FREQUENCY          (800) // Frequency in Hertz. Set frequency at 5 kHz
 
 #define GPIO_BUZZER_ENABLE      GPIO_NUM_1
 #define GPIO_RELE               GPIO_NUM_4
 #define GPIO_LED                GPIO_NUM_23
-#define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE) | (1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED))
-#define GPIO_OUTPUT_PIN_SEL     (1ULL<<GPIO_BUZZER_ENABLE)
+// #define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED) | (1ULL<<GPIO_BUZZER_ENABLE))
+#define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE))
 
-#define BEEP
+// #define BEEP
 // #define USE_LED
 
 
@@ -55,7 +55,19 @@ void beep(void) {
 	ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
 	ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 
-	vTaskDelay(100/portTICK_RATE_MS);
+	vTaskDelay(50/portTICK_RATE_MS);
+}
+
+void long_beep(void) {
+	ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+	ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+
+	vTaskDelay(200/portTICK_RATE_MS);
+	
+	ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
+	ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+
+	vTaskDelay(50/portTICK_RATE_MS);
 }
 
 void enciende(void) {
@@ -85,8 +97,8 @@ void apaga(void) {
 #endif
 
 #ifdef USE_LED
-    gpio_set_level(GPIO_LED, 1);
-    gpio_set_level(GPIO_RELE, 1);
+    gpio_set_level(GPIO_LED, 0);
+    gpio_set_level(GPIO_RELE, 0);
 #endif
 
 #ifdef BEEP
@@ -148,6 +160,20 @@ void RespondToCommand(IAVOZ_KEY_t found_command) {
 }
 
 void initCommandResponder() {
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config(&io_conf);
+
+#ifdef USE_LED
+    gpio_set_level(GPIO_LED, 1);
+	vTaskDelay(100/portTICK_RATE_MS);
+	gpio_set_level(GPIO_LED, 0);
+#endif
+
 #ifdef BEEP
 	// Prepare and then apply the LEDC PWM timer configuration
     ledc_timer_config_t ledc_timer = {
@@ -171,31 +197,7 @@ void initCommandResponder() {
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 
+    vTaskDelay(100/portTICK_RATE_MS);
     beep();
-#endif
-#ifdef USE_LED
-	//zero-initialize the config structure.
-    gpio_config_t io_conf = {};
-    //disable interrupt
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    //set as output mode
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    //bit mask of the pins that you want to set,e.g.GPIO18/19
-    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
-    //disable pull-down mode
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    //disable pull-up mode
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    //configure GPIO with the given settings
-    gpio_config(&io_conf);
-
-    gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-
-	vTaskDelay(100/portTICK_RATE_MS);
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
 #endif
 }

@@ -1,5 +1,6 @@
 
 #include "ges_iavoz_audio_provider.h"
+#include "model_settings.h"
 #include "sdkconfig.h"
 
 #include <cstddef>
@@ -16,7 +17,7 @@ bool IAVoz_I2SInit ( void ) {
     // Start listening for audio: MONO @ 16KHz
     i2s_config_t i2s_config = {
         .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX),
-        .sample_rate = 16000,
+        .sample_rate = kAudioSampleFrequency,
         .bits_per_sample = (i2s_bits_per_sample_t)16,
         .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
         .communication_format = I2S_COMM_FORMAT_STAND_I2S,

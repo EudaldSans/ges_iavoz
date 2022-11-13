@@ -25,7 +25,7 @@ limitations under the License.
 // frequency information. This has to be a power of two, and since we're dealing
 // with 30ms of 16KHz inputs, which means 480 samples, this is the next value.
 constexpr int kMaxAudioSampleSize = 512;
-constexpr int kAudioSampleFrequency = 16000;
+constexpr int kAudioSampleFrequency = 8000;
 
 // The following values are derived from values used during model training.
 // If you change the way you preprocess the input, update all these constants.
