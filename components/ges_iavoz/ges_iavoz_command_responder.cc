@@ -33,10 +33,20 @@ limitations under the License.
 #define GPIO_RELE               GPIO_NUM_4
 #define GPIO_LED                GPIO_NUM_23
 // #define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED) | (1ULL<<GPIO_BUZZER_ENABLE))
-#define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE))
+// #define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE))
 
 // #define BEEP
 // #define USE_LED
+
+uint32_t GPIO_OUTPUT_PIN_SEL = 0;
+
+#ifdef BEEP
+GPIO_OUTPUT_PIN_SEL |= ((1ULL<<GPIO_BUZZER_ENABLE));
+#endif
+
+#ifdef LED
+GPIO_OUTPUT_PIN_SEL |= ((1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED));
+#endif
 
 
 uint32_t activations = 0;

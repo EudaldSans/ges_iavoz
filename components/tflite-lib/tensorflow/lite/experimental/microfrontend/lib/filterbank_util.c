@@ -204,7 +204,7 @@ int FilterbankPopulateState(const struct FilterbankConfig* config,
   free(actual_channel_starts);
   free(actual_channel_widths);
   if (state->end_index >= spectrum_size) {
-    fprintf(stderr, "Filterbank end_index is above spectrum size.\n");
+    fprintf(stderr, "Filterbank end_index is above spectrum size. ei: %d, ss: %d.\n", state->end_index, spectrum_size);
     return 0;
   }
   return 1;
