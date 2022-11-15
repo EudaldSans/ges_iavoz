@@ -62,6 +62,8 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
     fvad_set_sample_rate(fp->vad, fp->ms->kAudioSampleFrequency);
     fvad_set_mode(fp->vad, 2);
 
+    ESP_LOGI(TAG, "fvad sampling frequency set to %d", fp->ms->kAudioSampleFrequency);
+
     fp->voices_in_frame = (bool*) malloc(sizeof(bool)*fp->ms->kFeatureSliceCount);
     if (!fp->voices_in_frame) {
         ESP_LOGE(TAG, "Error allocating space for voices in frame array");
