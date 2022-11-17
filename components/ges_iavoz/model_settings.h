@@ -24,7 +24,7 @@ limitations under the License.
 // The size of the input time series data we pass to the FFT to produce the
 // frequency information. This has to be a power of two, and since we're dealing
 // with 30ms of 16KHz inputs, which means 480 samples, this is the next value.
-constexpr int kMaxAudioSampleSize = 512 / 2;
+constexpr int kMaxAudioSampleSize = 240;
 constexpr int kAudioSampleFrequency = 8000;
 
 // The following values are derived from values used during model training.
