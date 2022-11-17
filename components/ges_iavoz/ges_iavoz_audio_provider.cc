@@ -189,10 +189,8 @@ void IAVoz_AudioProvider_I2STask ( void * vParam ) {
 }
 
 
-TfLiteStatus GetAudioSamples(IAVoz_AudioProvider_t * ap, int start_ms, int duration_ms, int *audio_samples_size, int16_t **audio_samples)
-{
-    if (!ap->is_audio_started) 
-    {
+TfLiteStatus GetAudioSamples(IAVoz_AudioProvider_t * ap, int start_ms, int duration_ms, int *audio_samples_size, int16_t **audio_samples) {
+    if (!ap->is_audio_started) {
         IAVoz_AudioProvider_Start(ap);
         ap->is_audio_started = true;
     }
@@ -207,16 +205,14 @@ TfLiteStatus GetAudioSamples(IAVoz_AudioProvider_t * ap, int start_ms, int durat
         ((uint8_t*)(ap->audio_output_buffer + ap->history_samples_to_keep)),
         ap->new_samples_to_get * sizeof(int16_t), 10);
 
-    if (bytes_read < 0) 
-    {
+    if (bytes_read < 0) {
         ESP_LOGE(TAG, " Model Could not read data from Ring Buffer");
     } 
-    else if (bytes_read < ap->new_samples_to_get * sizeof(int16_t)) 
-    {
+    else if (bytes_read < ap->new_samples_to_get * sizeof(int16_t)) {
         ESP_LOGD(TAG, "RB FILLED RIGHT NOW IS %d",
         rb_filled(ap->audio_capture_buffer));
         ESP_LOGD(TAG, " Partial Read of Data by Model ");
-        ESP_LOGV(TAG, " Could only read %d bytes when required %d bytes ", bytes_read, ap->new_samples_to_get * sizeof(int16_t));
+        ESP_LOGV(TAG, " Could only read %d bytes when required %d bytes ", bytes_read, ap->new_samples_to _get * sizeof(int16_t));
     }
 
     /* copy 320 bytes from output_buff into history */
@@ -229,7 +225,6 @@ TfLiteStatus GetAudioSamples(IAVoz_AudioProvider_t * ap, int start_ms, int durat
     return kTfLiteOk;
 }
 
-int32_t LatestAudioTimestamp ( IAVoz_AudioProvider_t * ap ) 
-{ 
+int32_t LatestAudioTimestamp ( IAVoz_AudioProvider_t * ap ) { 
     return ap->latest_audio_timestamp; 
 }
