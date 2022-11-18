@@ -1,5 +1,7 @@
 #include "ges_iavoz_main.h"
 
+#include "ges_connect.h"
+
 #include <sys/_stdint.h>
 #include "ges_iavoz_audio_provider.h"
 
@@ -111,6 +113,7 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
 
     initCommandResponder();
 
+    connect_init();
     return true;
 }
 

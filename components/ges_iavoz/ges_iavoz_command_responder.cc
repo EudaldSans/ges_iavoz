@@ -105,56 +105,56 @@ void RespondToCommand(IAVOZ_KEY_t found_command) {
 }
 
 void initCommandResponder() {
-	//zero-initialize the config structure.
-    gpio_config_t io_conf = {};
-    //disable interrupt
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    //set as output mode
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    //bit mask of the pins that you want to set,e.g.GPIO18/19
-    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
-    //disable pull-down mode
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    //disable pull-up mode
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    //configure GPIO with the given settings
-    gpio_config(&io_conf);
+	// //zero-initialize the config structure.
+    // gpio_config_t io_conf = {};
+    // //disable interrupt
+    // io_conf.intr_type = GPIO_INTR_DISABLE;
+    // //set as output mode
+    // io_conf.mode = GPIO_MODE_OUTPUT;
+    // //bit mask of the pins that you want to set,e.g.GPIO18/19
+    // io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
+    // //disable pull-down mode
+    // io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    // //disable pull-up mode
+    // io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    // //configure GPIO with the given settings
+    // gpio_config(&io_conf);
 
-	// Prepare and then apply the LEDC PWM timer configuration
-    ledc_timer_config_t ledc_timer = {
-        .speed_mode       = LEDC_MODE,
-        .duty_resolution  = LEDC_DUTY_RES,
-        .timer_num        = LEDC_TIMER,
-        .freq_hz          = LEDC_FREQUENCY,  // Set output frequency at 5 kHz
-        .clk_cfg          = LEDC_AUTO_CLK
-    };
-    ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+	// // Prepare and then apply the LEDC PWM timer configuration
+    // ledc_timer_config_t ledc_timer = {
+    //     .speed_mode       = LEDC_MODE,
+    //     .duty_resolution  = LEDC_DUTY_RES,
+    //     .timer_num        = LEDC_TIMER,
+    //     .freq_hz          = LEDC_FREQUENCY,  // Set output frequency at 5 kHz
+    //     .clk_cfg          = LEDC_AUTO_CLK
+    // };
+    // ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
 
-    // Prepare and then apply the LEDC PWM channel configuration
-    ledc_channel_config_t ledc_channel = {
-        .gpio_num       = LEDC_OUTPUT_IO,
-        .speed_mode     = LEDC_MODE,
-        .channel        = LEDC_CHANNEL,
-        .intr_type      = LEDC_INTR_DISABLE,
-        .timer_sel      = LEDC_TIMER,
-        .duty           = 0, // Set duty to 0%
-        .hpoint         = 0
-    };
-    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
+    // // Prepare and then apply the LEDC PWM channel configuration
+    // ledc_channel_config_t ledc_channel = {
+    //     .gpio_num       = LEDC_OUTPUT_IO,
+    //     .speed_mode     = LEDC_MODE,
+    //     .channel        = LEDC_CHANNEL,
+    //     .intr_type      = LEDC_INTR_DISABLE,
+    //     .timer_sel      = LEDC_TIMER,
+    //     .duty           = 0, // Set duty to 0%
+    //     .hpoint         = 0
+    // };
+    // ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 
-	gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // gpio_set_level(GPIO_LED, 1);
-    // Set duty to 50%
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+	// gpio_set_level(GPIO_BUZZER_ENABLE, 1);
+    // // gpio_set_level(GPIO_LED, 1);
+    // // Set duty to 50%
+    // ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+    // // Update duty to apply the new value
+    // ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 
-	vTaskDelay(100/portTICK_RATE_MS);
-	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
-    // gpio_set_level(GPIO_LED, 0);
+	// vTaskDelay(100/portTICK_RATE_MS);
+	// gpio_set_level(GPIO_BUZZER_ENABLE, 0);
+    // // gpio_set_level(GPIO_LED, 0);
 
-	// Set duty to 50%
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+	// // Set duty to 50%
+    // ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
+    // // Update duty to apply the new value
+    // ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 }
