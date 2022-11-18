@@ -211,11 +211,11 @@ void recv_task_tcp(void *param) {
             }
         } else {
             nerr = 0;
-            // esp_event_post_to(events_conn_loop_h, EVENTS_CONN, tcp_rx_buffer[0], &tcp_rx_buffer[1], sizeof(char)*len - 1, portMAX_DELAY);
+            esp_event_post_to(events_conn_loop_h, EVENTS_CONN, tcp_rx_buffer[0], &tcp_rx_buffer[1], sizeof(char)*len - 1, portMAX_DELAY);
         }
         vTaskDelay(200 / portTICK_PERIOD_MS);
     }
-    // esp_event_post_to(events_conn_loop_h, EVENTS_CONN, EVENT_CONN_DROPPED, NULL, 0, portMAX_DELAY);
+    esp_event_post_to(events_conn_loop_h, EVENTS_CONN, EVENT_CONN_DROPPED, NULL, 0, portMAX_DELAY);
     vTaskDelete(NULL);
 }
 
@@ -328,7 +328,7 @@ void recv_task_udp(void *param) {
         if (len < 0) {
             ESP_LOGE(TAG_UDP, "multicast recvfrom failed: errno %d", errno);
         } else {
-            // esp_event_post_to(events_conn_loop_h, EVENTS_CONN, recvbuf[0], recvbuf + 1, sizeof(char)*len, portMAX_DELAY);
+            esp_event_post_to(events_conn_loop_h, EVENTS_CONN, recvbuf[0], recvbuf + 1, sizeof(char)*len, portMAX_DELAY);
         }
     }
 }
