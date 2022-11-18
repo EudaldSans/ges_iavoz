@@ -150,16 +150,6 @@ void connect_init(){
 
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
-
-    // ESP_ERROR_CHECK(nvs_flash_init());
-    // ESP_ERROR_CHECK(esp_netif_init());
-    // // ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    // // ESP_ERROR_CHECK(example_connect());
-    // start_udp();
-
-    // in_addr_t new_addr = inet_addr((char *) IPHOST);
-    // start_tcp(new_addr);
 };
 
 
