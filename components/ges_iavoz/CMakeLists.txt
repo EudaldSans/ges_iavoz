@@ -3,6 +3,7 @@ set(component ges_iavoz)
 
 idf_component_register( SRCS 
                             "ges_connect.c"
+                            "ges_events.c"
                             "ges_iavoz.cc" 
                             "ges_iavoz_main.cc" 
                             "ges_iavoz_audio_provider.cc" 

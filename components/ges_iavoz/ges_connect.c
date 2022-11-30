@@ -1,5 +1,5 @@
 #include "ges_connect.h"
-// #include "events.h"
+#include "ges_events.h"
 
 #include <string.h>
 #include "freertos/FreeRTOS.h"

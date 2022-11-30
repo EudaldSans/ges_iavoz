@@ -24,7 +24,6 @@ limitations under the License.
 
 static const char *TAG = "IAVOZ_FP";
 
-
 TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp );
 TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP);
 
@@ -70,6 +69,20 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
     memset(fp->feature_data, 0, fp->ms->kFeatureElementCount);
     memset(fp->voices_in_frame, 0, sizeof(bool)*fp->ms->kFeatureSliceCount);
 
+    fp->audio_samples = (int16_t*) malloc(fp->ms->kAudioSampleFrequency * sizeof(int16_t));
+    if (!fp->audio_samples) {
+        ESP_LOGE(TAG, "Error allocating space for sample array");
+    }
+
+    memset(fp->audio_samples, 0, fp->ms->kAudioSampleFrequency * sizeof(int16_t));
+
+    fp->temp_audio_samples = (int16_t*) malloc(fp->ms->kAudioSampleFrequency * sizeof(int16_t));
+    if (!fp->temp_audio_samples) {
+        ESP_LOGE(TAG, "Error allocating space for temp sample array");
+    }
+
+    memset(fp->temp_audio_samples, 0, fp->ms->kAudioSampleFrequency * sizeof(int16_t));
+
     InitializeMicroFeatures( fp );
 
 
@@ -90,6 +103,12 @@ bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp ) {
 
     if (!fp->voices_in_frame) {ESP_LOGW(TAG, "Null voices in frame");}
     else {free(fp->voices_in_frame);}
+
+    if (!fp->audio_samples) {ESP_LOGW(TAG, "Null samples array");}
+    else {free(fp->audio_samples);}
+
+    if (!fp->temp_audio_samples) {ESP_LOGW(TAG, "Null samples array");}
+    else {free(fp->temp_audio_samples);}
 
     free(fp);
     ESP_LOGI(TAG, "Feature Provider de-initialized");
@@ -157,6 +176,8 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             int audio_samples_size = 0;
             int vadres;
 
+            // printf("Getting samples\n");
+
             // TODO(petewarden): Fix bug that leads to non-zero slice_start_ms
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
@@ -185,6 +206,12 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             TfLiteStatus generate_status = GenerateMicroFeatures(
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
                 new_slice_data, &num_samples_read, STP);
+
+            uint16_t samples_to_keep = fp->ms->kAudioSampleFrequency - audio_samples_size;
+
+            memcpy(fp->temp_audio_samples, fp->audio_samples + audio_samples_size, samples_to_keep * sizeof(int16_t));
+            memcpy(fp->temp_audio_samples + samples_to_keep, audio_samples, audio_samples_size);
+            memcpy(fp->audio_samples, fp->temp_audio_samples, fp->ms->kAudioSampleFrequency);
             
             if (generate_status != kTfLiteOk) {return generate_status;}
         }

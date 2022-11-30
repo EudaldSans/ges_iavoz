@@ -21,6 +21,8 @@ typedef struct {
     Fvad* vad;
     bool* voices_in_frame;
     uint8_t voices_write_pointer;
+    int16_t* audio_samples;
+    int16_t* temp_audio_samples;
 } IAVoz_FeatureProvider_t;
 
 // GES API
