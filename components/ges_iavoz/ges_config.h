@@ -22,7 +22,7 @@
 #define MIC_PIN_SD  22
 
 // Audio configurations
-#define AUDIO_FRAME_SAMPLES_P2  8
+#define AUDIO_FRAME_SAMPLES_P2  9
 #define AUDIO_FRAME_SAMPLES     (1 << AUDIO_FRAME_SAMPLES_P2)
 
 // Microphone configurations

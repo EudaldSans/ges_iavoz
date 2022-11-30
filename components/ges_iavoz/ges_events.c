@@ -51,12 +51,12 @@ void events_init ( void ) {
 }
 
 // Handler for the audio events
-void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data)
-{
+void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data) {
     switch(id){
 
         case VAD_START: {
             ESP_LOGI(TAG, "Voice detection STARTED");
+            if (!cs_permission_to_send) {return;}
             
             uint8_t payload[4+sizeof(float)];
             payload[0] = mt_AUDIO_DETECTED;
@@ -72,11 +72,9 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
         } break;
 
         // New sound frame to add to buffer or send
-        case EVENT_AUDIO_FRAME: 
-        {
-            if ( cs_permission_to_send && frames_to_send != 0)
-            {
-                ESP_LOGI(TAG, "Sending frame %d", sequence_num);
+        case EVENT_AUDIO_FRAME: {
+            ESP_LOGI(TAG, "Sending frame %d", sequence_num);
+            if ( cs_permission_to_send && frames_to_send != 0) {
                 uint8_t payload[4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)];
                 payload[0] = mt_AUDIO_DATA;
                 payload[1]=((4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)) >> 8);
@@ -86,16 +84,15 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
 
 
                 send_tcp(payload, sizeof(payload));
-                if ( frames_to_send > 0 )
-                {
+                if ( frames_to_send > 0 ) {
                     frames_to_send--;
                 }
             }
         } break;
 
-        case EVENT_AUDIO_FINISHED:
-        {
-            ESP_LOGI(TAG, "Voice detection FINISHED");
+        case EVENT_AUDIO_FINISHED: {
+            
+            if (!cs_permission_to_send) {return;}
             
             uint8_t payload[3];
             payload[0] = mt_AUDIO_FINISHED;
@@ -105,24 +102,18 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
             send_tcp(payload, 4 + sizeof(float));
         }
 
-        default: 
-        {
-            
+        default: {
         }
     }
 }
 
 // Handler for the general connection events
-void events_conn_handler (void* handler_arg, esp_event_base_t base, int32_t id, void* event_data)
-{
+void events_conn_handler (void* handler_arg, esp_event_base_t base, int32_t id, void* event_data) {
     ESP_LOGI(TAG, "New communication %d", id);
     uint8_t MAC[6];
     switch(id){
         case EVENT_CONN_SYNC:{
-            if ( cs_hub_available )
-            { 
-                return;
-            }
+            if ( cs_hub_available ){return;}
             
             ESP_LOGI(TAG, "Syncronization message received");
 
@@ -158,14 +149,8 @@ void events_conn_handler (void* handler_arg, esp_event_base_t base, int32_t id, 
 
             int n_sec_req = *((int *) event_data);
 
-            if ( n_sec_req < 0 )
-            {
-                frames_to_send = -1;
-            }
-            else
-            {
-                frames_to_send = n_sec_req * MIC_SAMPLE_RATE / AUDIO_FRAME_SAMPLES;
-            }
+            if ( n_sec_req < 0 ){frames_to_send = -1;}
+            else {frames_to_send = n_sec_req * MIC_SAMPLE_RATE / AUDIO_FRAME_SAMPLES;}
 
         } break;
 
