@@ -9,7 +9,7 @@
 #define MIC_SAMPLE_RATE 16000
 
 #define MIC_CH_LEFT     1
-#define MIC_CH_RIGHT    1
+#define MIC_CH_RIGHT    0
 #define MIC_CH_NUM      (MIC_CH_LEFT + MIC_CH_RIGHT)
 
 #define MIC_MODULATION_IS_PCM  1

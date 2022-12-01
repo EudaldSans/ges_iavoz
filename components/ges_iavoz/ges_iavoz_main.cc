@@ -121,7 +121,7 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
     initCommandResponder();
     
     // connect_init();
-    // events_init();
+    events_init();
     return true;
 }
 
@@ -203,20 +203,24 @@ void IAVoz_System_Task ( void * vParam ) {
         uint8_t voice_in_frame = 0;
         uint8_t voice_in_bof = 0;
         uint8_t voice_in_eof = 0;
+        char voice_visualization[sys->fp->ms->kFeatureSliceCount];
+
         for (uint16_t sample = 0; sample < sys->fp->ms->kFeatureSliceCount; sample++) {
             uint16_t position = (sample + sys->fp->voices_write_pointer) % sys->fp->ms->kFeatureSliceCount;
             if (sample < sys->fp->ms->kFeatureSliceCount/4) {voice_in_bof += sys->fp->voices_in_frame[position];}
             if (sample > 3*sys->fp->ms->kFeatureSliceCount/4) {voice_in_eof += sys->fp->voices_in_frame[position];}
 
             voice_in_frame += sys->fp->voices_in_frame[position];
+            if (sys->fp->voices_in_frame[position]) {voice_visualization[sample] = '|';}
+            else {voice_visualization[sample] = ' ';}
         }
 
-        ESP_LOGD(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
-        
+        ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
+       
         if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
         if (voice_in_eof > voice_in_frame/2) {continue;}
         if (voice_in_bof > voice_in_frame/2) {continue;}
-        // if (STP < 50) {continue;}
+        if (STP < 50) {continue;}
 
         for (int i = 0; i < ms->kFeatureElementCount; i++) {
             sys->model_input_buffer[i] = sys->fp->feature_data[i];
@@ -240,7 +244,6 @@ void IAVoz_System_Task ( void * vParam ) {
         }
 
         if (valid_command) {
-            float STP = 0;
             uint8_t offset = sys->fp->current_frame_start;
             
             esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, VAD_START, &found_command, sizeof(found_command), portMAX_DELAY);
