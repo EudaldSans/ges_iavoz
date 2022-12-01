@@ -1,6 +1,7 @@
 #include "ges_events.h"
 
 #include <string.h>
+#include "ges_iavoz.h"
 
 static const char* TAG = "[events]";
 
@@ -55,8 +56,10 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
     switch(id){
 
         case VAD_START: {
-            ESP_LOGI(TAG, "Voice detection STARTED");
+            IAVOZ_KEY_t found_index = *(IAVOZ_KEY_t*) event_data;
+            ESP_LOGI(TAG, "Voice detection STARTED with event: %d, %p", found_index, event_data);
             if (!cs_permission_to_send) {return;}
+            
             
             uint8_t payload[4+sizeof(float)];
             payload[0] = mt_AUDIO_DETECTED;
@@ -73,7 +76,7 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
 
         // New sound frame to add to buffer or send
         case EVENT_AUDIO_FRAME: {
-            ESP_LOGI(TAG, "Sending frame %d", sequence_num);
+            ESP_LOGV(TAG, "Sending frame %d", sequence_num);
             if ( cs_permission_to_send && frames_to_send != 0) {
                 uint8_t payload[4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)];
                 payload[0] = mt_AUDIO_DATA;

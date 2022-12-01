@@ -38,7 +38,7 @@ RecognizeCommands::RecognizeCommands(tflite::ErrorReporter* error_reporter,
 TfLiteStatus RecognizeCommands::ProcessLatestResults(
             const TfLiteTensor* latest_results, const int32_t current_time_ms,
             IAVOZ_KEY_t* found_command, uint8_t* score, bool* is_new_command, 
-            uint8_t* found_index) {
+            uint8_t* found_index, bool* valid_command) {
     if ((latest_results->dims->size != 2) || (latest_results->dims->data[0] != 1) || (latest_results->dims->data[1] != kCategoryCount)) {
         TF_LITE_REPORT_ERROR(error_reporter_,
             "The results for recognition should contain %d elements, but there are %d in an %d-dimensional shape",
@@ -137,6 +137,8 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     if (current_top_label == previous_top_label_)   {return kTfLiteOk;}
     if (time_since_last_top < suppression_ms_)      {return kTfLiteOk;}
     if (high_probability_samples != 1)              {return kTfLiteOk;}
+
+    *valid_command = true;
 
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
         activation = true;

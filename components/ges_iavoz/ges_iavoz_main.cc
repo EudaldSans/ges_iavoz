@@ -202,6 +202,7 @@ void IAVoz_System_Task ( void * vParam ) {
         uint8_t found_index;
         uint8_t score = 0;
         bool is_new_command = false;
+        bool valid_command = false;
 
         int32_t STP = 0;
         for (int i = 0; i < MAX_STP_SAMPLES; i++) {
@@ -220,7 +221,7 @@ void IAVoz_System_Task ( void * vParam ) {
             voice_in_frame += sys->fp->voices_in_frame[position];
         }
 
-        ESP_LOGI(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        ESP_LOG*valid_command = true;(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
         
         if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
         if (voice_in_eof > 2*voice_in_frame/3) {continue;}
@@ -228,17 +229,17 @@ void IAVoz_System_Task ( void * vParam ) {
         if (STP < 50) {continue;}
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
-            output, current_time, &found_command, &score, &is_new_command, &found_index);
+            output, current_time, &found_command, &score, &is_new_command, &found_index, &valid_command);
         if (process_status != kTfLiteOk) {
             ESP_LOGE(TAG, "RecognizeCommands::ProcessLatestResults() failed");
             return;
         }
 
-        if (found_command) {
+        if (valid_command) {
             float STP = 0;
             uint8_t offset = sys->fp->current_frame_start;
             
-            esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, VAD_START, &STP, sizeof(STP), portMAX_DELAY);
+            esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, VAD_START, &found_command, sizeof(found_command), portMAX_DELAY);
             
             for (int i = 0; i < sys->fp->number_of_frames; i++) {
                 esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, EVENT_AUDIO_FRAME, sys->fp->audio_samples[(i + offset) % sys->fp->number_of_frames], sys->fp->ms->kMaxAudioSampleSize * sizeof(int16_t), portMAX_DELAY);

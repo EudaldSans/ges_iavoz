@@ -143,7 +143,10 @@ class RecognizeCommands {
                                     const int32_t current_time_ms,
                                     IAVOZ_KEY_t* found_command, uint8_t* score,
                                     bool* is_new_command,
-                                    uint8_t* found_index);
+                                    uint8_t* found_index,
+                                    bool* valid_command);
+
+  bool activation;
 
  private:
   // Configuration
@@ -157,8 +160,6 @@ class RecognizeCommands {
   PreviousResultsQueue previous_results_;
   IAVOZ_KEY_t previous_top_label_;
   int32_t previous_top_label_time_;
-
-  bool activation;
 };
 
 #endif  // TENSORFLOW_LITE_MICRO_EXAMPLES_MICRO_SPEECH_RECOGNIZE_COMMANDS_H_
