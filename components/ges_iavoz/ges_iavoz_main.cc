@@ -6,7 +6,7 @@
 #include "ges_iavoz_command_responder.h"
 #include "model.h"
 
-#define MAX_STP_SAMPLES 3
+#define MAX_STP_SAMPLES 10
 
 const char * TAG = "IAVOZ_SYS";
 
@@ -210,9 +210,9 @@ void IAVoz_System_Task ( void * vParam ) {
         ESP_LOGI(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
         
         if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
-        if (voice_in_eof > 2*voice_in_frame/3) {continue;}
-        if (voice_in_bof > 2*voice_in_frame/3) {continue;}
-        if (STP < 50) {continue;}
+        if (voice_in_eof > 1*voice_in_frame/2) {continue;}
+        if (voice_in_bof > 1*voice_in_frame/2) {continue;}
+        // if (STP < 100) {continue;}
 
         for (int i = 0; i < ms->kFeatureElementCount; i++) {
             sys->model_input_buffer[i] = sys->fp->feature_data[i];

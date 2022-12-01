@@ -32,8 +32,8 @@ limitations under the License.
 #define GPIO_BUZZER_ENABLE      GPIO_NUM_1
 #define GPIO_RELE               GPIO_NUM_4
 #define GPIO_LED                GPIO_NUM_23
-// #define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE) | (1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED))
-#define GPIO_OUTPUT_PIN_SEL     (1ULL<<GPIO_BUZZER_ENABLE)
+#define GPIO_OUTPUT_PIN_SEL     ((1ULL<<GPIO_BUZZER_ENABLE) | (1ULL<<GPIO_RELE) | (1ULL<<GPIO_LED))
+// #define GPIO_OUTPUT_PIN_SEL     (1ULL<<GPIO_BUZZER_ENABLE)
 
 
 uint32_t activations = 0;
@@ -57,36 +57,43 @@ void beep(void) {
 
 void enciende(void) {
     if (status == 1) return;
+    ESP_LOGI(RESPONDER_TAG, "Enciende!!"); 
+    status = 1;
+    return;
+    
 	gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // gpio_set_level(GPIO_LED, 1);
-    // gpio_set_level(GPIO_RELE, 1);
+    gpio_set_level(GPIO_LED, 1);
+    gpio_set_level(GPIO_RELE, 1);
 	beep();
 	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
-    
-    status = 1;
 }
 
 void apaga(void) {
     if (status == 0) return;
+    ESP_LOGI(RESPONDER_TAG, "Apaga!!");
+    status = 0;
+    return;
+
 	gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // gpio_set_level(GPIO_RELE, 0);
-    // gpio_set_level(GPIO_LED, 0);
+    gpio_set_level(GPIO_RELE, 0);
+    gpio_set_level(GPIO_LED, 0);
 	beep();
 	beep();
 	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
-    
-    status = 0;
 }
 
 void ayuda(void) {
+    ESP_LOGI(RESPONDER_TAG, "Ayuda!!");
+    return;
+
 	gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // gpio_set_level(GPIO_LED, !status);
+    gpio_set_level(GPIO_LED, !status);
 	beep();
-    // gpio_set_level(GPIO_LED, status);
+    gpio_set_level(GPIO_LED, status);
 	beep();
-    // gpio_set_level(GPIO_LED, !status);
+    gpio_set_level(GPIO_LED, !status);
 	beep();
-    // gpio_set_level(GPIO_LED, status);
+    gpio_set_level(GPIO_LED, status);
 	gpio_set_level(GPIO_BUZZER_ENABLE, 0);
 }
 
@@ -95,7 +102,7 @@ void ayuda(void) {
 // action instead, and should implement their own versions of this function.
 void RespondToCommand(IAVOZ_KEY_t found_command) {
     ESP_LOGI(RESPONDER_TAG, "Responding to command: %d", found_command);
-    return;
+    // return;
 
     switch (found_command) {
         case IAVOZ_KEY_HEYLOLA: return;
