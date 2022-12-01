@@ -150,6 +150,8 @@ void connect_init(){
 
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
+
+    start_udp();
 };
 
 
