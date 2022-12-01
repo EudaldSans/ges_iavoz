@@ -94,6 +94,9 @@ void ayuda(void) {
 // to the error console. Real applications will want to take some custom
 // action instead, and should implement their own versions of this function.
 void RespondToCommand(IAVOZ_KEY_t found_command) {
+    ESP_LOGI(RESPONDER_TAG, "Responding to command: %d", found_command);
+    return;
+
     switch (found_command) {
         case IAVOZ_KEY_HEYLOLA: return;
         case IAVOZ_KEY_ENCIENDE: enciende(); break;
@@ -105,6 +108,8 @@ void RespondToCommand(IAVOZ_KEY_t found_command) {
 }
 
 void initCommandResponder() {
+    return;
+
 	//zero-initialize the config structure.
     gpio_config_t io_conf = {};
     //disable interrupt

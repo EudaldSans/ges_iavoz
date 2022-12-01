@@ -136,7 +136,7 @@ class RecognizeCommands {
                              int32_t average_window_duration_ms = 500,
                              uint8_t detection_threshold = 175,
                              int32_t suppression_ms = 500,
-                             int32_t minimum_count = 2);
+                             int32_t minimum_count = 1);
 
   // Call this with the results of running a model on sample data.
   TfLiteStatus ProcessLatestResults(const TfLiteTensor* latest_results,
@@ -144,7 +144,8 @@ class RecognizeCommands {
                                     IAVOZ_KEY_t* found_command, uint8_t* score,
                                     bool* is_new_command,
                                     uint8_t* found_index);
-
+  bool activation;
+  
  private:
   // Configuration
   tflite::ErrorReporter* error_reporter_;
@@ -157,8 +158,6 @@ class RecognizeCommands {
   PreviousResultsQueue previous_results_;
   IAVOZ_KEY_t previous_top_label_;
   int32_t previous_top_label_time_;
-
-  bool activation;
 };
 
 #endif  // TENSORFLOW_LITE_MICRO_EXAMPLES_MICRO_SPEECH_RECOGNIZE_COMMANDS_H_
