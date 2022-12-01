@@ -61,15 +61,14 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
             if (!cs_hub_available) {return;}
             
             
-            uint8_t payload[4+sizeof(float)];
+            uint8_t payload[5];
             payload[0] = mt_AUDIO_DETECTED;
             payload[1] = 0;
-            payload[2] = 4+sizeof(float);
+            payload[2] = 5;
             payload[3] = sequence_num;
-
-            // Energy value
-            memcpy(&payload[4], event_data, sizeof(float));
-            send_tcp(payload, 4 + sizeof(float));
+            payload[4] = found_index,
+            
+            send_tcp(payload, 5);
             sequence_num++;
 
         } break;
@@ -85,6 +84,13 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
                 payload[3] = sequence_num++;
                 memcpy(&payload[4], event_data, AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t));
 
+                int16_t* samples = (int16_t*) event_data;
+
+                for (int sample= 0; sample < AUDIO_FRAME_SAMPLES; sample++) {
+                    printf("%d ", samples[sample]);
+                }
+
+                printf("\n");
 
                 send_tcp(payload, sizeof(payload));
                 if ( frames_to_send > 0 ) {
@@ -100,9 +106,9 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
             uint8_t payload[3];
             payload[0] = mt_AUDIO_FINISHED;
             payload[1] = 0;
-            payload[2] = 4+sizeof(float);
+            payload[2] = 3;
 
-            send_tcp(payload, 4 + sizeof(float));
+            send_tcp(payload, 3);
         }
 
         default: {
@@ -112,7 +118,7 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
 
 // Handler for the general connection events
 void events_conn_handler (void* handler_arg, esp_event_base_t base, int32_t id, void* event_data) {
-    ESP_LOGI(TAG, "New communication %d", id);
+    ESP_LOGV(TAG, "New communication %d", id);
     uint8_t MAC[6];
     switch(id){
         case EVENT_CONN_SYNC:{

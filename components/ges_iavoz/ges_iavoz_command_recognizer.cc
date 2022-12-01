@@ -133,14 +133,14 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         previous_top_label_ = IAVOZ_KEY_NULL;
         previous_top_label_time_ = std::numeric_limits<int32_t>::min();
     }
-
+    
     if (current_top_score < detection_threshold_)   {return kTfLiteOk;}
     if (current_top_label == previous_top_label_)   {return kTfLiteOk;}
     if (time_since_last_top < suppression_ms_)      {return kTfLiteOk;}
     if (high_probability_samples != 1)              {return kTfLiteOk;}
     // if (STP < 30)                                   {return kTfLiteOk;}
 
-    *valid_command = true;
+    if (current_top_index != 0) {*valid_command = true;}
 
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
         activation = true;

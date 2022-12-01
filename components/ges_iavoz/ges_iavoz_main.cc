@@ -245,6 +245,8 @@ void IAVoz_System_Task ( void * vParam ) {
             uint8_t offset = sys->fp->current_frame_start;
             
             esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, VAD_START, &found_command, sizeof(found_command), portMAX_DELAY);
+
+            vTaskDelay(100/portTICK_PERIOD_MS);
             
             for (int i = 0; i < sys->fp->number_of_frames; i++) {
                 esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, EVENT_AUDIO_FRAME, sys->fp->audio_samples[(i + offset) % sys->fp->number_of_frames], sys->fp->ms->kMaxAudioSampleSize * sizeof(int16_t), portMAX_DELAY);
