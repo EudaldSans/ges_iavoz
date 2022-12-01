@@ -7,12 +7,13 @@
 #include "ges_iavoz_audio_provider.h"
 
 #include "ges_iavoz_command_responder.h"
+#include "model.h"
 
 #define MAX_STP_SAMPLES 3
 
 const char * TAG = "IAVOZ_SYS";
 
-constexpr int kTensorArenaSize = 30 * 1024;
+// constexpr int kTensorArenaSize = g_model_len;
 
 void IAVoz_System_Task ( void * vParam );
 
@@ -27,7 +28,7 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
 
     sys->ms = ms;
 
-    sys->tensor_arena = (uint8_t *) malloc(kTensorArenaSize * sizeof(uint8_t));
+    sys->tensor_arena = (uint8_t *) malloc(g_model_len * sizeof(uint8_t));
 
     // TF API
     sys->model = tflite::GetModel(g_model);
@@ -36,8 +37,11 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
         return false;
     }
 
+    ESP_LOGI(TAG, "Creating error reporter");
     sys->error_reporter = new tflite::MicroErrorReporter();
+    if (!sys->error_reporter) {ESP_LOGE(TAG, "Could not create error reporter");}
 
+    ESP_LOGI(TAG, "Adding operations to op resolver");
     sys->micro_op_resolver = new tflite::MicroMutableOpResolver<6>(sys->error_reporter);
     if (sys->micro_op_resolver->AddDepthwiseConv2D() != kTfLiteOk) {
         ESP_LOGE(TAG, "Could not add deppth wise conv 2D layer");
@@ -64,8 +68,10 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
         return false;
     }
 
-    sys->interpreter = new tflite::MicroInterpreter(sys->model, *(sys->micro_op_resolver), sys->tensor_arena, kTensorArenaSize, sys->error_reporter);
+    ESP_LOGI(TAG, "Creating micro interpreter");
+    sys->interpreter = new tflite::MicroInterpreter(sys->model, *(sys->micro_op_resolver), sys->tensor_arena, g_model_len, sys->error_reporter);
 
+    ESP_LOGI(TAG, "Allocating tensors");
     TfLiteStatus allocate_status = sys->interpreter->AllocateTensors();
     if (allocate_status != kTfLiteOk) {
         ESP_LOGE(TAG, "AllocateTensors() failed");
@@ -175,7 +181,7 @@ void IAVoz_System_Task ( void * vParam ) {
     IAVoz_ModelSettings_t * ms = sys->ms;
 
     int32_t previous_time = 0;
-    int32_t STP_buffer[MAX_STP_SAMPLES];
+    float STP_buffer[MAX_STP_SAMPLES];
     uint8_t STP_position = 0;
 
     for (;;) {
@@ -188,21 +194,6 @@ void IAVoz_System_Task ( void * vParam ) {
         previous_time = current_time;
 
         if (how_many_new_slices == 0 ) {continue;}
-
-        // FIXME: Fetaure buffer does not change as the program is executed!!
-        for (int i = 0; i < ms->kFeatureElementCount; i++) {
-            sys->model_input_buffer[i] = sys->fp->feature_data[i];
-        }
-
-        TfLiteStatus invoke_status = sys->interpreter->Invoke();
-        if (invoke_status != kTfLiteOk ) { ESP_LOGE(TAG, "Interpeter failed");}
-        
-        TfLiteTensor * output = sys->interpreter->output(0);
-        IAVOZ_KEY_t found_command;
-        uint8_t found_index;
-        uint8_t score = 0;
-        bool is_new_command = false;
-        bool valid_command = false;
 
         int32_t STP = 0;
         for (int i = 0; i < MAX_STP_SAMPLES; i++) {
@@ -221,12 +212,26 @@ void IAVoz_System_Task ( void * vParam ) {
             voice_in_frame += sys->fp->voices_in_frame[position];
         }
 
-        ESP_LOG*valid_command = true;(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        ESP_LOGD(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
         
         if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
         if (voice_in_eof > 2*voice_in_frame/3) {continue;}
         if (voice_in_bof > 2*voice_in_frame/3) {continue;}
         if (STP < 50) {continue;}
+
+        for (int i = 0; i < ms->kFeatureElementCount; i++) {
+            sys->model_input_buffer[i] = sys->fp->feature_data[i];
+        }
+
+        TfLiteStatus invoke_status = sys->interpreter->Invoke();
+        if (invoke_status != kTfLiteOk ) { ESP_LOGE(TAG, "Interpeter failed");}
+        
+        TfLiteTensor * output = sys->interpreter->output(0);
+        IAVOZ_KEY_t found_command;
+        uint8_t found_index;
+        uint8_t score = 0;
+        bool is_new_command = false;
+        bool valid_command = false;
 
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
             output, current_time, &found_command, &score, &is_new_command, &found_index, &valid_command);

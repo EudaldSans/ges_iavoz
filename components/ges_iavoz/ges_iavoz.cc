@@ -38,6 +38,16 @@ const IAVOZ_KEY_t kCategoryLabels[kCategoryCount] = {
     IAVOZ_KEY_HEYLOLA,
 };
 
+// const IAVOZ_KEY_t kCategoryLabels[kCategoryCount] = {
+//     IAVOZ_KEY_NULL,
+//     IAVOZ_KEY_NULL,
+//     IAVOZ_KEY_SOCORRO,
+//     IAVOZ_KEY_SUBE,
+//     IAVOZ_KEY_BAJA,
+//     IAVOZ_KEY_HEYLOLA,
+//     IAVOZ_KEY_PARA,
+// };
+
 static IAVoz_ModelSettings_t IAVoz_ModelSettings = {
     .kMaxAudioSampleSize = kMaxAudioSampleSize,
     .kAudioSampleFrequency = kAudioSampleFrequency,
