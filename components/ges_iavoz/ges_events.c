@@ -58,7 +58,7 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
         case VAD_START: {
             IAVOZ_KEY_t found_index = *(IAVOZ_KEY_t*) event_data;
             ESP_LOGI(TAG, "Voice detection STARTED with event: %d, %p", found_index, event_data);
-            if (!cs_permission_to_send) {return;}
+            if (!cs_hub_available) {return;}
             
             
             uint8_t payload[4+sizeof(float)];
@@ -95,7 +95,7 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
 
         case EVENT_AUDIO_FINISHED: {
             
-            if (!cs_permission_to_send) {return;}
+            if (!cs_hub_available) {return;}
             
             uint8_t payload[3];
             payload[0] = mt_AUDIO_FINISHED;
