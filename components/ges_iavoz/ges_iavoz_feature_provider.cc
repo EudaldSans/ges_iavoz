@@ -31,7 +31,6 @@ static const char *TAG = "IAVOZ_FP";
 
 TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp );
 TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t* input, int input_size, int output_size, int8_t* output, size_t* num_samples_read, int32_t* STP);
-void UpdateState (IAVoz_FeatureProvider_t * fp, float STP, float ZCR, uint8_t max_bank, int16_t low_band_power, int16_t mid_band_power);
 
 bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelSettings_t * ms ) {
     IAVoz_FeatureProvider_t * fp = (IAVoz_FeatureProvider_t *) malloc (sizeof(IAVoz_FeatureProvider_t));
@@ -80,7 +79,7 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
 }
 
 bool IAVoz_FeatureProvider_DeInit ( IAVoz_FeatureProvider_t * fp ) {
-    if ( !fp ) {
+    if (!fp ) {
         ESP_LOGE(TAG, "Failed to de-init Feature Provider");
         return false;
     }
@@ -286,4 +285,3 @@ TfLiteStatus GenerateMicroFeatures ( IAVoz_FeatureProvider_t * fp, const int16_t
 
     return kTfLiteOk;
 }
-

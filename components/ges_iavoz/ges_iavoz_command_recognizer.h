@@ -134,8 +134,9 @@ class RecognizeCommands {
   // help reduce spurious recognitions.
   explicit RecognizeCommands(tflite::ErrorReporter* error_reporter,
                              int32_t average_window_duration_ms = 500,
-                             uint8_t detection_threshold = 135,
-                             int32_t suppression_ms = 500,
+                             uint8_t detection_threshold = 160,
+                             uint8_t weak_detection_threshold = 100,
+                             int32_t suppression_ms = 250,
                              int32_t minimum_count = 1);
 
   // Call this with the results of running a model on sample data.
@@ -144,20 +145,29 @@ class RecognizeCommands {
                                     IAVOZ_KEY_t* found_command, uint8_t* score,
                                     bool* is_new_command,
                                     uint8_t* found_index);
-  bool activation;
+  // bool activation;
   
  private:
+  void reset_state(bool* is_new_command);
+
   // Configuration
   tflite::ErrorReporter* error_reporter_;
   int32_t average_window_duration_ms_;
   uint8_t detection_threshold_;
+  uint8_t weak_detection_threshold_;
   int32_t suppression_ms_;
   int32_t minimum_count_;
 
   // Working variables
   PreviousResultsQueue previous_results_;
   IAVOZ_KEY_t previous_top_label_;
+  uint8_t total_consecutive_tops_;
+  int32_t first_top_time_;
+  int32_t accumulated_probability_;
   int32_t previous_top_label_time_;
+
+  bool weak_activation;
+  bool activation;
 };
 
 #endif  // TENSORFLOW_LITE_MICRO_EXAMPLES_MICRO_SPEECH_RECOGNIZE_COMMANDS_H_
