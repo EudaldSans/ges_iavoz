@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include "ges_iavoz.h"
+#include "model_settings.h"
 
 static const char* TAG = "[events]";
 
@@ -183,6 +184,16 @@ void events_conn_handler (void* handler_arg, esp_event_base_t base, int32_t id, 
             cs_permission_to_send = false;
             frames_to_send = -1;
         } break;
+
+        case EVENT_CONN_WEIGHTS_TRANSMISSION: {
+            uint8_t payload[3 + kCategoryCount];
+            payload[0] = EVENT_CONN_WEIGHTS_TRANSMISSION;
+            payload[1] = 0;
+            payload[2] = 3 + kCategoryCount;
+            memcpy(&payload[3], event_data, kCategoryCount);
+
+            send_tcp(payload, 3 + kCategoryCount);
+        }
 
         case CONN_START_OF_STREAMING_MODE: {
             float STP = 0;

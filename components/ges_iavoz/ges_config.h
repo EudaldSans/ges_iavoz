@@ -55,5 +55,6 @@ enum msgType {
             mt_REF_ANSWER                   = 15, //m->m
             mt_ASSISTANT_STATE              = 16, //m->s
             mt_START_OF_STREAMING_MODE      = 17, //m->s
-            mt_STOP_OF_STREAMING_MODE       = 18 //m->s
+            mt_STOP_OF_STREAMING_MODE       = 18, //m->s
+            mt_WEIGHTS                      = 19 // s->m
 };
