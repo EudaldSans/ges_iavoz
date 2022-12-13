@@ -14,6 +14,8 @@
 
 #include <fvad.h>
 
+#define NUMBER_OF_FRAMES 50
+
 typedef struct {
     int8_t * feature_data;
     IAVoz_ModelSettings_t * ms;
@@ -22,7 +24,7 @@ typedef struct {
     bool* voices_in_frame;
     uint8_t voices_write_pointer;
     uint8_t number_of_frames;
-    int16_t* audio_samples[kAudioSampleFrequency/kMaxAudioSampleSize + 1];
+    int16_t* audio_samples[NUMBER_OF_FRAMES];
     uint8_t current_frame_start;
 } IAVoz_FeatureProvider_t;
 

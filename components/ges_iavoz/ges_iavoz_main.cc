@@ -120,7 +120,7 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
 
     initCommandResponder();
     
-    // connect_init();
+    connect_init();
     events_init();
     return true;
 }
@@ -251,7 +251,7 @@ void IAVoz_System_Task ( void * vParam ) {
             vTaskDelay(100/portTICK_PERIOD_MS);
             
             for (int i = 0; i < sys->fp->number_of_frames; i++) {
-                esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, EVENT_AUDIO_FRAME, sys->fp->audio_samples[(i + offset) % sys->fp->number_of_frames], sys->fp->ms->kMaxAudioSampleSize * sizeof(int16_t), portMAX_DELAY);
+                esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, EVENT_AUDIO_FRAME, sys->fp->audio_samples[(i + offset) % sys->fp->number_of_frames], 320 * sizeof(int16_t), portMAX_DELAY);
             }
             
             esp_event_post_to(events_audio_loop_h, EVENTS_AUDIO, EVENT_AUDIO_FINISHED, NULL, 0, portMAX_DELAY);

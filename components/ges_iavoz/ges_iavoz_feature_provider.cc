@@ -72,7 +72,7 @@ bool IAVoz_FeatureProvider_Init ( IAVoz_FeatureProvider_t ** fpptr, IAVoz_ModelS
     memset(fp->feature_data, 0, fp->ms->kFeatureElementCount);
     memset(fp->voices_in_frame, 0, sizeof(bool)*fp->ms->kFeatureSliceCount);
 
-    fp->number_of_frames = kAudioSampleFrequency/kMaxAudioSampleSize + 1;
+    fp->number_of_frames = NUMBER_OF_FRAMES;
     ESP_LOGI(TAG, "Allocating space for %d frames of %d samples", fp->number_of_frames, fp->ms->kMaxAudioSampleSize);
     for (int i = 0; i < fp->number_of_frames; i++) {
         fp->audio_samples[i] = (int16_t*) malloc(fp->ms->kMaxAudioSampleSize * sizeof(int16_t));
@@ -212,7 +212,7 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
 
             uint16_t samples_to_keep = fp->ms->kAudioSampleFrequency - audio_samples_size;
 
-            memcpy(fp->audio_samples[fp->current_frame_start], audio_samples, audio_samples_size * sizeof(int16_t));
+            memcpy(fp->audio_samples[fp->current_frame_start], audio_samples + 160, 320 * sizeof(int16_t));
             
             // for (int sample = 0; sample < audio_samples_size; sample++) {
             //     printf("[%d](%d/%d) ", sample, fp->audio_samples[fp->current_frame_start][sample], audio_samples[sample]);

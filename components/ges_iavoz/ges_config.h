@@ -23,7 +23,7 @@
 
 // Audio configurations
 #define AUDIO_FRAME_SAMPLES_P2  9
-#define AUDIO_FRAME_SAMPLES     (1 << AUDIO_FRAME_SAMPLES_P2)
+#define AUDIO_FRAME_SAMPLES     (320)
 
 // Microphone configurations
 enum {

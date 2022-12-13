@@ -75,7 +75,7 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
 
         // New sound frame to add to buffer or send
         case EVENT_AUDIO_FRAME: {
-            ESP_LOGI(TAG, "Sending frame %d", sequence_num);
+            
             int16_t* samples = (int16_t*) event_data;
 
             // for (int sample= 0; sample < AUDIO_FRAME_SAMPLES; sample++) {
@@ -85,18 +85,17 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
             // printf("\n");
 
 
-            if ( cs_permission_to_send && frames_to_send != 0) {
-                uint8_t payload[4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)];
-                payload[0] = mt_AUDIO_DATA;
-                payload[1]=((4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)) >> 8);
-                payload[2]=(4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)) & 0xff;
-                payload[3] = sequence_num++;
-                memcpy(&payload[4], event_data, AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t));
+            ESP_LOGI(TAG, "Sending frame %d", sequence_num);
+            uint8_t payload[4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)];
+            payload[0] = mt_AUDIO_DATA;
+            payload[1]=((4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)) >> 8);
+            payload[2]=(4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)) & 0xff;
+            payload[3] = sequence_num++;
+            memcpy(&payload[4], event_data, AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t));
 
-                send_tcp(payload, sizeof(payload));
-                if ( frames_to_send > 0 ) {
-                    frames_to_send--;
-                }
+            send_tcp(payload, sizeof(payload));
+            if ( frames_to_send > 0 ) {
+                frames_to_send--;
             }
         } break;
 

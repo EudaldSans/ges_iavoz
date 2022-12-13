@@ -164,6 +164,8 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     // if (high_probability_samples != 1)               {std::cout << "High probability samples!" << std::endl; return kTfLiteOk;}
     if (current_top_score < detection_threshold_)    {std::cout << "Low top score!" << std::endl; return kTfLiteOk;}
     // if (current_top_label == previous_top_label_)    {return kTfLiteOk;}
+
+    *valid_command = true;
     
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
         if (current_top_score < detection_threshold_) {weak_activation = true; std::cout << "Weak ";}
@@ -171,7 +173,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         activation = true;
         previous_top_label_time_ = current_time_ms;
         std::cout << "Activation" << std::endl;
-        *valid_command = true;
+        
     } else if (current_top_label != IAVOZ_KEY_HEYLOLA && current_top_label != IAVOZ_KEY_NULL && activation) {
         if (weak_activation && current_top_score < detection_threshold_) {return kTfLiteOk;}
         if (current_top_score < detection_threshold_) {std::cout << "Weak ";}
@@ -180,7 +182,6 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         activation = false;
         previous_top_label_time_ = std::numeric_limits<int32_t>::min();
         std::cout << "Command " << current_top_label << std::endl;
-        *valid_command = true;
     }
 
     previous_top_label_ = current_top_label;
