@@ -215,7 +215,7 @@ void IAVoz_System_Task ( void * vParam ) {
             else {voice_visualization[sample] = ' ';}
         }
 
-        ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        ESP_LOGD(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
        
         if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
         if (voice_in_eof > voice_in_frame/2) {continue;}
