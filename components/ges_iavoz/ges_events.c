@@ -2,7 +2,10 @@
 
 #include <string.h>
 #include "ges_iavoz.h"
-#include "model_settings.h"
+
+// FIXME: Can not import model_settings.h without breaking everything
+static const uint16_t kCategoryCount = 6;
+// #include "model_settings.h"
 
 static const char* TAG = "[events]";
 
@@ -77,14 +80,6 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
         // New sound frame to add to buffer or send
         case EVENT_AUDIO_FRAME: {
             ESP_LOGI(TAG, "Sending frame %d", sequence_num);
-            int16_t* samples = (int16_t*) event_data;
-
-            // for (int sample= 0; sample < AUDIO_FRAME_SAMPLES; sample++) {
-            //     printf("[%d] (%d) ", sample, samples[sample]);
-            // }
-
-            // printf("\n");
-
 
             if ( cs_permission_to_send && frames_to_send != 0) {
                 uint8_t payload[4 + AUDIO_FRAME_SAMPLES * MIC_CH_NUM * sizeof(int16_t)];
@@ -111,7 +106,7 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
             payload[2] = 3;
 
             send_tcp(payload, 3);
-        }
+        } break;
 
         default: {
         }
@@ -121,7 +116,7 @@ void events_audio_handler(void* handler_arg, esp_event_base_t base, int32_t id, 
 // Handler for the general connection events
 void events_conn_handler (void* handler_arg, esp_event_base_t base, int32_t id, void* event_data) {
     ESP_LOGV(TAG, "New communication %d", id);
-    uint8_t MAC[6];
+
     switch(id){
         case EVENT_CONN_SYNC:{
             if ( cs_hub_available ){return;}
@@ -193,7 +188,7 @@ void events_conn_handler (void* handler_arg, esp_event_base_t base, int32_t id, 
             memcpy(&payload[3], event_data, kCategoryCount);
 
             send_tcp(payload, 3 + kCategoryCount);
-        }
+        } break;
 
         case CONN_START_OF_STREAMING_MODE: {
             float STP = 0;

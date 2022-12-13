@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "ges_events.h"
+
 static const char * TAG = "IAVOZ_AP";
 
 void IAVoz_AudioProvider_I2STask ( void * vParam );

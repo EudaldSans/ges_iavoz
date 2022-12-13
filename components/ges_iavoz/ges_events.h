@@ -1,14 +1,12 @@
 #pragma once
 
-#ifndef __cplusplus
-# include <stdatomic.h>
-#else
+#ifdef __cplusplus
 # include <atomic>
 # define _Atomic(X) std::atomic< X >
-#endif
 
-#ifdef __cplusplus
 extern "C" {
+#else
+# include <stdatomic.h>
 #endif
 
 #include "freertos/FreeRTOS.h"

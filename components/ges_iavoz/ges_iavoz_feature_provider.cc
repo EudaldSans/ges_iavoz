@@ -15,8 +15,6 @@ limitations under the License.
 
 #include "ges_iavoz_feature_provider.h"
 
-
-
 #include <cstddef>
 #include <stdlib.h>
 #include <string.h>

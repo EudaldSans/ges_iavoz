@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+
 #include "ges_iavoz_command_recognizer.h"
 
 #include <limits>
@@ -182,6 +183,8 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         std::cout << "Command " << current_top_label << std::endl;
         *valid_command = true;
     }
+
+    // esp_event_post_to(events_conn_loop_h, EVENTS_AUDIO, EVENT_CONN_WEIGHTS_TRANSMISSION, average_scores, kCategoryCount, portMAX_DELAY);
 
     previous_top_label_ = current_top_label;
 
