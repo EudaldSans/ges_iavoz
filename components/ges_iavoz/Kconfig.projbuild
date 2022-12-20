@@ -75,21 +75,15 @@ menu "Connect configuration"
 
     config ESP_WIFI_SSID
         string "WiFi SSID"
-        default "MiFibra-D53F"
+        default "IAVOZ_test"
         help 
             SSID (network name) for the device to connect to.
 
     config ESP_WIFI_PASSWORD
         string "WiFi Password"
-        default "GSVCp2Ya"
+        default "123456789"
         help
             WiFi password (WPA or WPA2) for the device to use.
-
-    config ESP_MAXIMUM_RETRY
-        int "Maximum retry"
-        default 5
-        help
-            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
 
     choice ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
         prompt "WiFi Scan auth mode threshold"

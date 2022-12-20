@@ -107,7 +107,7 @@ void ayuda(void) {
 // action instead, and should implement their own versions of this function.
 void RespondToCommand(IAVOZ_KEY_t found_command) {
     ESP_LOGI(RESPONDER_TAG, "Responding to command: %d", found_command);
-    // return;
+    return;
 
     switch (found_command) {
         case IAVOZ_KEY_HEYLOLA: return;
