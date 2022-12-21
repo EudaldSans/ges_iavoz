@@ -1,3 +1,6 @@
 [submodule "components/libfvad"]
 	path = components/libfvad
 	url = git@github.com:EudaldSans/libfvad.git
+[submodule "components/esp-nn"]
+	path = components/esp-nn
+	url = git@github.com:espressif/esp-nn.git
