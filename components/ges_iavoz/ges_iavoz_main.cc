@@ -178,40 +178,58 @@ void IAVoz_System_Task ( void * vParam ) {
     int32_t previous_time = 0;
     float STP_buffer[MAX_STP_SAMPLES];
     uint8_t STP_position = 0;
+    int how_many_new_slices = 0;
+    
+    uint8_t voice_in_frame = 0;
+    uint8_t voice_in_bof = 0;
+    uint8_t voice_in_eof = 0;
+    char voice_visualization[sys->fp->ms->kFeatureSliceCount];
+
+    int32_t current_time = LatestAudioTimestamp(sys->ap);
+    TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices, STP_buffer + STP_position);
+    TfLiteStatus invoke_status = sys->interpreter->Invoke();
 
     for (;;) {
-        const int32_t current_time = LatestAudioTimestamp(sys->ap);
-        int how_many_new_slices = 0;
+        // vTaskDelay(100/portTICK_PERIOD_MS);
 
-        TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices, STP_buffer + STP_position);
+        current_time = LatestAudioTimestamp(sys->ap);
+        feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices, STP_buffer + STP_position);
+ 
         STP_position = (STP_position + 1) % MAX_STP_SAMPLES;
         if (feature_status != kTfLiteOk) {continue;}
         previous_time = current_time;
 
-        if (how_many_new_slices == 0 ) {continue;}
+        if (how_many_new_slices == 0 ) {
+            vTaskDelay(100/portTICK_PERIOD_MS);
+            continue;
+        }
         int32_t STP = 0;
         for (int i = 0; i < MAX_STP_SAMPLES; i++) {
             STP += STP_buffer[i];
         }
         STP /= MAX_STP_SAMPLES;
-        
-        uint8_t voice_in_frame = 0;
-        uint8_t voice_in_bof = 0;
-        uint8_t voice_in_eof = 0;
+
+        voice_in_frame = 0;
+        voice_in_bof = 0;
+        voice_in_eof = 0;
+
         for (uint16_t sample = 0; sample < sys->fp->ms->kFeatureSliceCount; sample++) {
             uint16_t position = (sample + sys->fp->voices_write_pointer) % sys->fp->ms->kFeatureSliceCount;
             if (sample < sys->fp->ms->kFeatureSliceCount/4) {voice_in_bof += sys->fp->voices_in_frame[position];}
             if (sample > 3*sys->fp->ms->kFeatureSliceCount/4) {voice_in_eof += sys->fp->voices_in_frame[position];}
 
             voice_in_frame += sys->fp->voices_in_frame[position];
+            if (sys->fp->voices_in_frame[position]) {voice_visualization[sample] = '|';}
+            else {voice_visualization[sample] = ' ';}
         }
 
-        ESP_LOGI(TAG, "vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_in_frame, voice_in_bof, voice_in_eof, STP);
-        
+        ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        // ESP_LOGI(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+       
         if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
         if (voice_in_eof > voice_in_frame/2) {continue;}
         if (voice_in_bof > voice_in_frame/2) {continue;}
-        // if (STP < 50) {continue;}
+        if (STP < 50) {continue;}
 
         for (int i = 0; i < ms->kFeatureElementCount; i++) {
             sys->model_input_buffer[i] = sys->fp->feature_data[i];
@@ -219,6 +237,7 @@ void IAVoz_System_Task ( void * vParam ) {
 
         TfLiteStatus invoke_status = sys->interpreter->Invoke();
         if (invoke_status != kTfLiteOk ) { ESP_LOGE(TAG, "Interpeter failed");}
+        vTaskDelay(100/portTICK_PERIOD_MS);
         
         TfLiteTensor * output = sys->interpreter->output(0);
         IAVOZ_KEY_t found_command;
@@ -239,6 +258,5 @@ void IAVoz_System_Task ( void * vParam ) {
         }
 
     }
-
     vTaskDelete(NULL);
 }
