@@ -189,12 +189,16 @@ void IAVoz_System_Task ( void * vParam ) {
     TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices, STP_buffer + STP_position);
     TfLiteStatus invoke_status = sys->interpreter->Invoke();
 
+    uint64_t start, end, process_start, invoke_time, populate_time;
+
     for (;;) {
         // vTaskDelay(100/portTICK_PERIOD_MS);
+        process_start = esp_timer_get_time();
 
         current_time = LatestAudioTimestamp(sys->ap);
         feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices, STP_buffer + STP_position);
- 
+        populate_time = esp_timer_get_time() - process_start;
+
         STP_position = (STP_position + 1) % MAX_STP_SAMPLES;
         if (feature_status != kTfLiteOk) {continue;}
         previous_time = current_time;
@@ -224,7 +228,7 @@ void IAVoz_System_Task ( void * vParam ) {
         }
 
         ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
-        // ESP_LOGI(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+        ESP_LOGI(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
        
         if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
         if (voice_in_eof > voice_in_frame/2) {continue;}
@@ -235,7 +239,9 @@ void IAVoz_System_Task ( void * vParam ) {
             sys->model_input_buffer[i] = sys->fp->feature_data[i];
         }
 
+        start = esp_timer_get_time();
         TfLiteStatus invoke_status = sys->interpreter->Invoke();
+        invoke_time = esp_timer_get_time() - start;
         if (invoke_status != kTfLiteOk ) { ESP_LOGE(TAG, "Interpeter failed");}
         vTaskDelay(100/portTICK_PERIOD_MS);
         
@@ -256,6 +262,8 @@ void IAVoz_System_Task ( void * vParam ) {
             sys->cb(found_command, STP);
             RespondToCommand(found_command);
         }
+
+        printf("invoke time: %lld, populate time: %lld, total time: %lld\n", invoke_time/1000, populate_time/1000, (esp_timer_get_time() - process_start)/1000);
 
     }
     vTaskDelete(NULL);
