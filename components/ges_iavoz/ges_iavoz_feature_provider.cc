@@ -179,8 +179,6 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
             int audio_samples_size = 0;
             int vadres;
 
-            // printf("Getting samples\n");
-
             // TODO(petewarden): Fix bug that leads to non-zero slice_start_ms
             GetAudioSamples(ap, (slice_start_ms > 0 ? slice_start_ms : 0),
                             fp->ms->kFeatureSliceDurationMs, &audio_samples_size,
@@ -214,30 +212,8 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
 
             memcpy(fp->audio_samples[fp->current_frame_start], audio_samples + 160, 320 * sizeof(int16_t));
             
-            // for (int sample = 0; sample < audio_samples_size; sample++) {
-            //     printf("[%d](%d/%d) ", sample, fp->audio_samples[fp->current_frame_start][sample], audio_samples[sample]);
-            // }
-
-            // printf("/n");
-            
             fp->current_frame_start = (fp->current_frame_start + 1) % fp->number_of_frames;
 
-            int8_t max_bank = 0;
-            int16_t max_value = new_slice_data[0];
-            int32_t low_band_power = 0;
-            int32_t mid_band_power = 0;
-            for (uint8_t sample = 1; sample < fp->ms->kFeatureSliceSize; sample++) {
-                if (new_slice_data[sample] > max_value) {
-                    max_bank = sample;
-                    max_value = new_slice_data[sample];
-                }
-
-                if (6 < sample && sample < 13) {low_band_power += new_slice_data[sample];}
-                if (12 < sample && sample < 19) {mid_band_power += new_slice_data[sample];}
-            }
-    
-            // UpdateState(fp, STP, ZCR, max_bank, low_band_power, mid_band_power);
-            
             if (generate_status != kTfLiteOk) {return generate_status;}         
         }
     }
