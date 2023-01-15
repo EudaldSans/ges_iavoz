@@ -139,7 +139,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
 
     if (time_since_last_top >= 2000 && activation) {
         reset_state(is_new_command);
-        std::cout << "Timed out!" << std::endl;
+        // std::cout << "Timed out!" << std::endl;
     }
 
     if (current_top_label != previous_top_label_) {
@@ -159,21 +159,21 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         return kTfLiteOk;
     } 
 
-    if (current_top_label == IAVOZ_KEY_NULL)         {std::cout << "Not keyword!" << std::endl; return kTfLiteOk;}
+    if (current_top_label == IAVOZ_KEY_NULL)         {/*std::cout << "Not keyword!" << std::endl;*/ return kTfLiteOk;}
     // if (time_since_last_top < suppression_ms_)       {std::cout << "Too many keywords together!" << std::endl; return kTfLiteOk;}
     // if (high_probability_samples != 1)               {std::cout << "High probability samples!" << std::endl; return kTfLiteOk;}
-    if (current_top_score < detection_threshold_)    {std::cout << "Low top score!" << std::endl; return kTfLiteOk;}
+    if (current_top_score < detection_threshold_)    {/*std::cout << "Low top score!" << std::endl;*/ return kTfLiteOk;}
     // if (current_top_label == previous_top_label_)    {return kTfLiteOk;}
     
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
-        if (current_top_score < detection_threshold_) {weak_activation = true; std::cout << "Weak ";}
+        if (current_top_score < detection_threshold_) {weak_activation = true; /*std::cout << "Weak ";*/}
         
         activation = true;
         previous_top_label_time_ = current_time_ms;
         std::cout << "Activation" << std::endl;
     } else if (current_top_label != IAVOZ_KEY_HEYLOLA && current_top_label != IAVOZ_KEY_NULL && activation) {
         if (weak_activation && current_top_score < detection_threshold_) {return kTfLiteOk;}
-        if (current_top_score < detection_threshold_) {std::cout << "Weak ";}
+        // if (current_top_score < detection_threshold_) {std::cout << "Weak ";}
 
         *is_new_command = true;
         activation = false;
