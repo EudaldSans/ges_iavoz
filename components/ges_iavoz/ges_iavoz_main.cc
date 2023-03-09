@@ -214,9 +214,11 @@ void IAVoz_System_Task ( void * vParam ) {
         STP /= MAX_STP_SAMPLES;
 
         voice_in_frame = 0;
-        voice_in_bof = 0;
-        voice_in_eof = 0;
+        voice_in_bof = 0; // voice in begining of frame
+        voice_in_eof = 0; // voice in end of frame
 
+        // Collect VAD data from voices_in_frame array.
+        // voice_in_bof
         for (uint16_t sample = 0; sample < sys->fp->ms->kFeatureSliceCount; sample++) {
             uint16_t position = (sample + sys->fp->voices_write_pointer) % sys->fp->ms->kFeatureSliceCount;
             if (sample < sys->fp->ms->kFeatureSliceCount/4) {voice_in_bof += sys->fp->voices_in_frame[position];}
@@ -227,15 +229,17 @@ void IAVoz_System_Task ( void * vParam ) {
             else {voice_visualization[sample] = ' ';}
         }
 
-        ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
-        ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+        // Print VAD data
+        // ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        // ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
        
-        if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
-        if (voice_in_eof > voice_in_frame/2) {continue;}
-        if (voice_in_bof > voice_in_frame/2) {continue;}
-        if (voice_in_bof != 0 && voice_in_eof == 0) {continue;}
-        if (voice_in_bof == 0 && voice_in_eof != 0) {continue;}
-        if (STP < 50) {continue;}
+        // Invoke model only if it looks like we have a windowed keyword
+        // if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
+        // if (voice_in_eof > voice_in_frame/2) {continue;}
+        // if (voice_in_bof > voice_in_frame/2) {continue;}
+        // // if (voice_in_bof != 0 && voice_in_eof == 0) {continue;}
+        // // if (voice_in_bof == 0 && voice_in_eof != 0) {continue;}
+        // if (STP < 50) {continue;}
 
         for (int i = 0; i < ms->kFeatureElementCount; i++) {
             sys->model_input_buffer[i] = sys->fp->feature_data[i];
@@ -253,6 +257,7 @@ void IAVoz_System_Task ( void * vParam ) {
         uint8_t score = 0;
         bool is_new_command = false;
 
+        // Results processing, in this function we decide if voice is a valid keyword
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
             output, current_time, &found_command, &score, &is_new_command, &found_index);
         if (process_status != kTfLiteOk) {
@@ -265,6 +270,7 @@ void IAVoz_System_Task ( void * vParam ) {
             RespondToCommand(found_command);
         }
 
+        // To check model execution time
         // printf("invoke time: %lld, populate time: %lld, total time: %lld\n", invoke_time/1000, populate_time/1000, (esp_timer_get_time() - process_start)/1000);
 
     }

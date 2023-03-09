@@ -78,10 +78,11 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     }
 
     // If there are too few results, assume the result will be unreliable and
-    // bail.
+    // bail. 
     const int64_t how_many_results = previous_results_.size();
     const int64_t earliest_time = previous_results_.front().time_;
     const int64_t samples_duration = current_time_ms - earliest_time;
+    // For large models that take more than 100ms per inference this does not work reliably, leave commented
     // if ((how_many_results < minimum_count_) || (samples_duration < (average_window_duration_ms_ / 4))) {
     //     *found_command = previous_top_label_;
     //     *score = 0;
@@ -127,21 +128,23 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         time_since_last_top = current_time_ms - previous_top_label_time_;
     }
 
-    std::cout << std::setprecision(2) << std::fixed;
-    std::cout << "SCORES " << current_time_ms << "ms";
-    for (int i = 0; i < kCategoryCount; ++i) 
-    //To calculate % threshold
-    std::cout << "\t " << kCategoryLabels[i] << ": " << 100*(((float)average_scores[i]) / ((float)253)) << "% ";
-    std::cout << "\t top label: " << current_top_label << " " << 100*((float)current_top_score / (float)253) << "%";
-    std::cout << std::endl;
+    // std::cout << std::setprecision(2) << std::fixed;
+    // std::cout << "SCORES " << current_time_ms << "ms";
+    // for (int i = 0; i < kCategoryCount; ++i) 
+    // //To calculate % threshold
+    // std::cout << "\t " << kCategoryLabels[i] << ": " << 100*(((float)average_scores[i]) / ((float)253)) << "% ";
+    // std::cout << "\t top label: " << current_top_label << " " << 100*((float)current_top_score / (float)253) << "%";
+    // std::cout << std::endl;
 
     *is_new_command = false;
 
+    // If previous activation happened more than 2 seconds ago, reset and leave.
     if (time_since_last_top >= 2000 && activation) {
         reset_state(is_new_command);
         // std::cout << "Timed out!" << std::endl;
     }
 
+    // For fast models, the same keyword might be detected several times, keep count of how many times this has happened
     if (current_top_label != previous_top_label_) {
         first_top_time_ = current_time_ms;
         total_consecutive_tops_ = 1;
@@ -151,6 +154,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         accumulated_probability_ += current_top_score;
     }
 
+    // If the same kwd has been detected more than 3 times this is not a reliable detection, reset state and leave.
     int32_t accum_prob = accumulated_probability_/total_consecutive_tops_;
     bool weak_detection = (accum_prob > weak_detection_threshold_) && total_consecutive_tops_ > 1;
     if (total_consecutive_tops_ > 3) {
@@ -159,6 +163,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         return kTfLiteOk;
     } 
 
+    // Discard all results that do not look like a reliable detection
     if (current_top_label == IAVOZ_KEY_NULL)         {/*std::cout << "Not keyword!" << std::endl;*/ return kTfLiteOk;}
     // if (time_since_last_top < suppression_ms_)       {std::cout << "Too many keywords together!" << std::endl; return kTfLiteOk;}
     // if (high_probability_samples != 1)               {std::cout << "High probability samples!" << std::endl; return kTfLiteOk;}

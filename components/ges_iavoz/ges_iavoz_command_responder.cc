@@ -47,15 +47,15 @@ uint8_t status = 0;
 const char * RESPONDER_TAG = "IAVOZ_RESPONDER";
 
 void beep(void) {
-	// ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-	// ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+	ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
+	ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 
-	// vTaskDelay(100/portTICK_RATE_MS);
+	vTaskDelay(100/portTICK_RATE_MS);
 	
-	// ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
-	// ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+	ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
+	ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 
-	// vTaskDelay(100/portTICK_RATE_MS);
+	vTaskDelay(100/portTICK_RATE_MS);
 }
 
 void enciende(void) {
@@ -63,7 +63,6 @@ void enciende(void) {
 
     ESP_LOGI(RESPONDER_TAG, "Enciende!!"); 
     status = 1;
-    return;
     
 	// gpio_set_level(GPIO_BUZZER_ENABLE, 1);
     // gpio_set_level(GPIO_LED, 1);
@@ -77,7 +76,6 @@ void apaga(void) {
     
     ESP_LOGI(RESPONDER_TAG, "Apaga!!");
     status = 0;
-    return;
 
 	// gpio_set_level(GPIO_BUZZER_ENABLE, 1);
     // gpio_set_level(GPIO_RELE, 0);
@@ -89,7 +87,6 @@ void apaga(void) {
 
 void ayuda(void) {
     ESP_LOGI(RESPONDER_TAG, "Ayuda!!");
-    return;
 
 	// gpio_set_level(GPIO_BUZZER_ENABLE, 1);
     // gpio_set_level(GPIO_LED, !status);
@@ -107,7 +104,6 @@ void ayuda(void) {
 // action instead, and should implement their own versions of this function.
 void RespondToCommand(IAVOZ_KEY_t found_command) {
     ESP_LOGI(RESPONDER_TAG, "Responding to command: %d", found_command);
-    // return;
 
     switch (found_command) {
         case IAVOZ_KEY_HEYLOLA: return;
@@ -120,8 +116,6 @@ void RespondToCommand(IAVOZ_KEY_t found_command) {
 }
 
 void initCommandResponder() {
-    return;
-
 	// //zero-initialize the config structure.
     // gpio_config_t io_conf = {};
     // //disable interrupt
@@ -136,15 +130,6 @@ void initCommandResponder() {
     // io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     // //configure GPIO with the given settings
     // gpio_config(&io_conf);
-
-    // gpio_set_level(GPIO_BUZZER_ENABLE, 1);
-    // ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-    // ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-
-	// vTaskDelay(100/portTICK_RATE_MS);
-    // ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
-    // ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-	// gpio_set_level(GPIO_BUZZER_ENABLE, 0);
 
 	// // Prepare and then apply the LEDC PWM timer configuration
     // ledc_timer_config_t ledc_timer = {
