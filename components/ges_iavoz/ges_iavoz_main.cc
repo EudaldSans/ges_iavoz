@@ -195,7 +195,7 @@ void IAVoz_System_Task ( void * vParam ) {
     uint8_t voice_in_frame = 0;
     uint8_t voice_in_bof = 0;
     uint8_t voice_in_eof = 0;
-    char voice_visualization[sys->fp->ms->kFeatureSliceCount + 1] = {0};
+    char voice_visualization[49 + 1] = {0};
 
     int32_t current_time = LatestAudioTimestamp(sys->ap);
     TfLiteStatus feature_status = IAVoz_FeatureProvider_PopulateFeatureData(sys->fp, sys->ap, previous_time, current_time, &how_many_new_slices, STP_buffer + STP_position);
@@ -231,22 +231,22 @@ void IAVoz_System_Task ( void * vParam ) {
 
         // Collect VAD data from voices_in_frame array.
         // voice_in_bof
-        for (uint16_t sample = 0; sample < sys->fp->ms->kFeatureSliceCount; sample++) {
-            uint16_t position = (sample + sys->fp->voices_write_pointer) % sys->fp->ms->kFeatureSliceCount;
-            if (sample < sys->fp->ms->kFeatureSliceCount/4) {voice_in_bof += sys->fp->voices_in_frame[position];}
-            if (sample > 3*sys->fp->ms->kFeatureSliceCount/4) {voice_in_eof += sys->fp->voices_in_frame[position];}
+        // for (uint16_t sample = 0; sample < 49; sample++) {
+        //     uint16_t position = (sample + sys->fp->voices_write_pointer) % 49;
+        //     if (sample < 49/4) {voice_in_bof += sys->fp->voices_in_frame[position];}
+        //     if (sample > 3*49/4) {voice_in_eof += sys->fp->voices_in_frame[position];}
 
-            voice_in_frame += sys->fp->voices_in_frame[position];
-            if (sys->fp->voices_in_frame[position]) {voice_visualization[sample] = '|';}
-            else {voice_visualization[sample] = ' ';}
-        }
+        //     voice_in_frame += sys->fp->voices_in_frame[position];
+        //     if (sys->fp->voices_in_frame[position]) {voice_visualization[sample] = '|';}
+        //     else {voice_visualization[sample] = ' ';}
+        // }
 
         // Print VAD data
         // ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
         // ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
        
         // Invoke model only if it looks like we have a windowed keyword
-        // if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
+        // if (voice_in_frame < 49/3){continue;}
         // if (voice_in_eof > voice_in_frame/2) {continue;}
         // if (voice_in_bof > voice_in_frame/2) {continue;}
         // if (voice_in_bof != 0 && voice_in_eof == 0) {continue;}
