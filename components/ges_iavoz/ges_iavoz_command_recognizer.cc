@@ -23,14 +23,12 @@ RecognizeCommands::RecognizeCommands(tflite::ErrorReporter* error_reporter,
                                     int32_t average_window_duration_ms,
                                     uint8_t detection_threshold,
                                     uint8_t weak_detection_threshold,
-                                    int32_t suppression_ms,
-                                    int32_t minimum_count)
+                                    int32_t suppression_ms)
         : error_reporter_(error_reporter),
         average_window_duration_ms_(average_window_duration_ms),
         detection_threshold_(detection_threshold),
         weak_detection_threshold_(weak_detection_threshold),
         suppression_ms_(suppression_ms),
-        minimum_count_(minimum_count),
         previous_results_(error_reporter){
 
     previous_top_label_ = IAVOZ_KEY_NULL;
@@ -83,13 +81,13 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     const int64_t earliest_time = previous_results_.front().time_;
     const int64_t samples_duration = current_time_ms - earliest_time;
     // For large models that take more than 100ms per inference this does not work reliably, leave commented
-    // if ((how_many_results < minimum_count_) || (samples_duration < (average_window_duration_ms_ / 4))) {
-    //     *found_command = previous_top_label_;
-    //     *score = 0;
-    //     *is_new_command = false;
-    //     printf("Too few results\n");
-    //     return kTfLiteOk;
-    // }
+    if ((how_many_results < 2) || (samples_duration < (average_window_duration_ms_ / 4))) {
+        *found_command = previous_top_label_;
+        *score = 0;
+        *is_new_command = false;
+        printf("Too few results %lld\n", how_many_results);
+        return kTfLiteOk;
+    }
 
     // Calculate the average score across all the results in the window.
     int32_t average_scores[kCategoryCount];

@@ -242,8 +242,8 @@ void IAVoz_System_Task ( void * vParam ) {
         }
 
         // Print VAD data
-        ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
-        ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+        // ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        // ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
        
         // Invoke model only if it looks like we have a windowed keyword
         // if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}

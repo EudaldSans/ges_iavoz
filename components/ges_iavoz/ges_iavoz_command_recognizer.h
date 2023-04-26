@@ -136,8 +136,7 @@ class RecognizeCommands {
                              int32_t average_window_duration_ms = 500,
                              uint8_t detection_threshold = 160,
                              uint8_t weak_detection_threshold = 100,
-                             int32_t suppression_ms = 250,
-                             int32_t minimum_count = 1);
+                             int32_t suppression_ms = 250);
 
   // Call this with the results of running a model on sample data.
   TfLiteStatus ProcessLatestResults(const TfLiteTensor* latest_results,
@@ -156,7 +155,6 @@ class RecognizeCommands {
   uint8_t detection_threshold_;
   uint8_t weak_detection_threshold_;
   int32_t suppression_ms_;
-  int32_t minimum_count_;
 
   // Working variables
   PreviousResultsQueue previous_results_;
