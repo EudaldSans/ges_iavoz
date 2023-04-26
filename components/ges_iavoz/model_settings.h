@@ -30,7 +30,7 @@ constexpr int kAudioSampleFrequency = 16000;
 // The following values are derived from values used during model training.
 // If you change the way you preprocess the input, update all these constants.
 constexpr int kFeatureSliceSize = 40;
-constexpr int kFeatureSliceCount = 49;
+constexpr int kFeatureSliceCount = 99;
 constexpr int kFeatureElementCount = (kFeatureSliceSize * kFeatureSliceCount);
 constexpr int kFeatureSliceStrideMs = 20;
 constexpr int kFeatureSliceDurationMs = 30;
@@ -39,7 +39,7 @@ constexpr int kFeatureSliceDurationMs = 30;
 constexpr int kSilenceIndex = 0;
 constexpr int kUnknownIndex = 1;
 // If you modify the output categories, you need to update the following values.
-constexpr int kCategoryCount = 6;
+constexpr int kCategoryCount = 5;
 
 extern const IAVOZ_KEY_t kCategoryLabels[kCategoryCount];
 

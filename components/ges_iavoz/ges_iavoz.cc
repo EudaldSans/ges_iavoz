@@ -31,7 +31,6 @@ static const char * TAG = "IAVOZMAIN";
 
 const IAVOZ_KEY_t kCategoryLabels[kCategoryCount] = {
     IAVOZ_KEY_NULL,
-    IAVOZ_KEY_NULL,
     IAVOZ_KEY_SOCORRO,
     IAVOZ_KEY_APAGA,
     IAVOZ_KEY_ENCIENDE,

@@ -128,13 +128,13 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         time_since_last_top = current_time_ms - previous_top_label_time_;
     }
 
-    // std::cout << std::setprecision(2) << std::fixed;
-    // std::cout << "SCORES " << current_time_ms << "ms";
-    // for (int i = 0; i < kCategoryCount; ++i) 
-    // //To calculate % threshold
-    // std::cout << "\t " << kCategoryLabels[i] << ": " << 100*(((float)average_scores[i]) / ((float)253)) << "% ";
-    // std::cout << "\t top label: " << current_top_label << " " << 100*((float)current_top_score / (float)253) << "%";
-    // std::cout << std::endl;
+    std::cout << std::setprecision(2) << std::fixed;
+    std::cout << "SCORES " << current_time_ms << "ms";
+    for (int i = 0; i < kCategoryCount; ++i) 
+    //To calculate % threshold
+    std::cout << "\t " << kCategoryLabels[i] << ": " << 100*(((float)average_scores[i]) / ((float)253)) << "% ";
+    std::cout << "\t top label: " << current_top_label << " " << 100*((float)current_top_score / (float)253) << "%";
+    std::cout << std::endl;
 
     *is_new_command = false;
 
@@ -168,7 +168,11 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     // if (time_since_last_top < suppression_ms_)       {std::cout << "Too many keywords together!" << std::endl; return kTfLiteOk;}
     // if (high_probability_samples != 1)               {std::cout << "High probability samples!" << std::endl; return kTfLiteOk;}
     if (current_top_score < detection_threshold_)    {/*std::cout << "Low top score!" << std::endl;*/ return kTfLiteOk;}
-    // if (current_top_label == previous_top_label_)    {return kTfLiteOk;}
+    if (current_top_label == previous_top_label_)    {return kTfLiteOk;}
+    
+    previous_top_label_ = current_top_label;
+    std::cout << "Activation " << current_top_label << std::endl;
+    return kTfLiteOk;
     
     if (current_top_label == IAVOZ_KEY_HEYLOLA && !activation) {
         if (current_top_score < detection_threshold_) {weak_activation = true; /*std::cout << "Weak ";*/}

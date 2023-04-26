@@ -39,7 +39,7 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
     if (!sys->error_reporter) {ESP_LOGE(TAG, "Could not create error reporter");}
 
     ESP_LOGI(TAG, "Adding operations to op resolver");
-    sys->micro_op_resolver = new tflite::MicroMutableOpResolver<6>(sys->error_reporter);
+    sys->micro_op_resolver = new tflite::MicroMutableOpResolver<9>(sys->error_reporter);
     if (sys->micro_op_resolver->AddDepthwiseConv2D() != kTfLiteOk) {
         ESP_LOGE(TAG, "Could not add deppth wise conv 2D layer");
         return false;
@@ -62,6 +62,18 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
     }
     if (sys->micro_op_resolver->AddConv2D() != kTfLiteOk) {
         ESP_LOGE(TAG, "Could not add conv 2D layer");
+        return false;
+    }
+    if (sys->micro_op_resolver->AddPad() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add Pad layer");
+        return false;
+    }
+    if (sys->micro_op_resolver->AddAdd() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add Add layer");
+        return false;
+    }
+    if (sys->micro_op_resolver->AddMean() != kTfLiteOk) {
+        ESP_LOGE(TAG, "Could not add Mean layer");
         return false;
     }
 
@@ -230,15 +242,15 @@ void IAVoz_System_Task ( void * vParam ) {
         }
 
         // Print VAD data
-        // ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
-        // ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+        ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
        
         // Invoke model only if it looks like we have a windowed keyword
         // if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
         // if (voice_in_eof > voice_in_frame/2) {continue;}
         // if (voice_in_bof > voice_in_frame/2) {continue;}
-        // // if (voice_in_bof != 0 && voice_in_eof == 0) {continue;}
-        // // if (voice_in_bof == 0 && voice_in_eof != 0) {continue;}
+        // if (voice_in_bof != 0 && voice_in_eof == 0) {continue;}
+        // if (voice_in_bof == 0 && voice_in_eof != 0) {continue;}
         // if (STP < 50) {continue;}
 
         for (int i = 0; i < ms->kFeatureElementCount; i++) {

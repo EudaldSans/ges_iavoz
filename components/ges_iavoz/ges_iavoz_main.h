@@ -22,7 +22,7 @@
 typedef struct {
     tflite::ErrorReporter * error_reporter;
     const tflite::Model * model;
-    tflite::MicroMutableOpResolver<6> * micro_op_resolver;
+    tflite::MicroMutableOpResolver<9> * micro_op_resolver;
     tflite::MicroInterpreter * interpreter;
     RecognizeCommands * recognizer;
 
