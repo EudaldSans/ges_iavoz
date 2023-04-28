@@ -180,29 +180,17 @@ TfLiteStatus IAVoz_FeatureProvider_PopulateFeatureData (IAVoz_FeatureProvider_t 
 
             fp->voices_in_frame[fp->voices_write_pointer] = vadres;
             fp->voices_write_pointer = (fp->voices_write_pointer + 1) % fp->ms->kFeatureSliceCount;
-
             int8_t* new_slice_data = fp->feature_data + (new_slice * fp->ms->kFeatureSliceSize);
+            if (!vadres) {
+                memset(new_slice_data, 0, fp->frontend_state.filterbank.num_channels);
+                continue;
+            }
+            
             size_t num_samples_read;
             TfLiteStatus generate_status = GenerateMicroFeatures(
                 fp, audio_samples, audio_samples_size, fp->ms->kFeatureSliceSize,
                 new_slice_data, &num_samples_read, STP);
-            
-            int8_t max_bank = 0;
-            int16_t max_value = new_slice_data[0];
-            int32_t low_band_power = 0;
-            int32_t mid_band_power = 0;
-            for (uint8_t sample = 1; sample < fp->ms->kFeatureSliceSize; sample++) {
-                if (new_slice_data[sample] > max_value) {
-                    max_bank = sample;
-                    max_value = new_slice_data[sample];
-                }
-
-                if (6 < sample && sample < 13) {low_band_power += new_slice_data[sample];}
-                if (12 < sample && sample < 19) {mid_band_power += new_slice_data[sample];}
-            }
-    
-            // UpdateState(fp, STP, ZCR, max_bank, low_band_power, mid_band_power);
-            
+                        
             if (generate_status != kTfLiteOk) {return generate_status;}         
         }
     }
