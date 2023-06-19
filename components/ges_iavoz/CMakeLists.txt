@@ -8,7 +8,7 @@ idf_component_register( SRCS
                             "ges_iavoz_audio_provider.cc" 
                             "ges_iavoz_feature_provider.cc" 
                             "ges_iavoz_command_recognizer.cc" 
-                            "model_30-lr001epochs.cc"
+                            "model_150-lr0025epochs_normal_last-version.cc"
                             "ges_iavoz_command_responder.cc"
                             "ringbuf.c"
                         INCLUDE_DIRS "."

@@ -126,18 +126,19 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         time_since_last_top = current_time_ms - previous_top_label_time_;
     }
 
-    std::cout << std::setprecision(2) << std::fixed;
-    std::cout << "SCORES " << current_time_ms << "ms";
-    for (int i = 0; i < kCategoryCount; ++i) 
-    //To calculate % threshold
-    std::cout << "\t " << kCategoryLabels[i] << ": " << 100*(((float)average_scores[i]) / ((float)253)) << "% ";
-    std::cout << "\t top label: " << current_top_label << " " << 100*((float)current_top_score / (float)253) << "%";
-    std::cout << std::endl;
+
+    // std::cout << std::setprecision(2) << std::fixed;
+    // std::cout << "SCORES " << current_time_ms << "ms";
+    // for (int i = 0; i < kCategoryCount; ++i) 
+    // //To calculate % threshold
+    // std::cout << "\t " << kCategoryLabels[i] << ": " << 100*(((float)average_scores[i]) / ((float)255)) << "% ";
+    // std::cout << "\t top label: " << current_top_label << " " << 100*((float)current_top_score / (float)255) << "%";
+    // std::cout << std::endl;
 
     *is_new_command = false;
 
     // If previous activation happened more than 2 seconds ago, reset and leave.
-    if (time_since_last_top >= 2000 && activation) {
+    if (time_since_last_top >= 2500 && activation) {
         reset_state(is_new_command);
         // std::cout << "Timed out!" << std::endl;
     }
@@ -160,7 +161,9 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         reset_state(is_new_command);
         return kTfLiteOk;
     } 
-    int detection_thresholds[IAVOZ_NUM_KEYS] = {0,190,160,160,0,0,0,195,0,0};
+    //conf 1: {0,220,160,160,0,0,0,220,0,0}
+    //conf 2: {0,230,200,200,0,0,0,230,0,0}
+    int detection_thresholds[IAVOZ_NUM_KEYS] = {0,static_cast<int>(0.85*255),static_cast<int>(0.73*255),static_cast<int>(0.69*255),0,0,0,static_cast<int>(0.87*255),0,0}; 
     // Discard all results that do not look like a reliable detection
     if (current_top_label == IAVOZ_KEY_NULL)         {/*std::cout << "Not keyword!" << std::endl;*/ return kTfLiteOk;}
     // if (time_since_last_top < suppression_ms_)       {std::cout << "Too many keywords together!" << std::endl; return kTfLiteOk;}
@@ -173,7 +176,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         
         activation = true;
         previous_top_label_time_ = current_time_ms;
-        std::cout << "Activation" << std::endl;
+        std::cout << "Activation" << " " << 100*((float)current_top_score / (float)255) << "%"  << std::endl;
     } else if (current_top_label != IAVOZ_KEY_HEYLOLA && current_top_label != IAVOZ_KEY_NULL && activation) {
         if (weak_activation && current_top_score < detection_thresholds[current_top_label]) {return kTfLiteOk;}
         // if (current_top_score < detection_threshold_) {std::cout << "Weak ";}
@@ -181,7 +184,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         *is_new_command = true;
         activation = false;
         previous_top_label_time_ = std::numeric_limits<int32_t>::min();
-        std::cout << "Command " << current_top_label << std::endl;
+        std::cout << "Command " << current_top_label  << " " << 100*((float)current_top_score / (float)255) << "%" << std::endl;
     }
 
     previous_top_label_ = current_top_label;

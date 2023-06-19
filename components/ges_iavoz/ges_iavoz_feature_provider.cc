@@ -217,8 +217,8 @@ TfLiteStatus InitializeMicroFeatures( IAVoz_FeatureProvider_t * fp )
     config.window.step_size_ms = fp->ms->kFeatureSliceStrideMs;
     config.noise_reduction.smoothing_bits = 10;
     config.filterbank.num_channels = fp->ms->kFeatureSliceSize;
-    config.filterbank.lower_band_limit = 125.0;
-    config.filterbank.upper_band_limit = 7500.0;
+    config.filterbank.lower_band_limit = 0.0;
+    config.filterbank.upper_band_limit = 8000.0;
     config.noise_reduction.smoothing_bits = 10;
     config.noise_reduction.even_smoothing = 0.025;
     config.noise_reduction.odd_smoothing = 0.06;

@@ -23,7 +23,7 @@ int FftPopulateState(struct FftState* state, size_t input_size) {
   while (state->fft_size < state->input_size) {
     state->fft_size <<= 1;
   }
-
+  printf("\n%d\n", state->fft_size);
   state->input = reinterpret_cast<int16_t*>(
       malloc(state->fft_size * sizeof(*state->input)));
   if (state->input == nullptr) {

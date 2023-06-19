@@ -225,9 +225,9 @@ void IAVoz_System_Task ( void * vParam ) {
         }
         STP /= MAX_STP_SAMPLES;
 
-        voice_in_frame = 0;
-        voice_in_bof = 0; // voice in begining of frame
-        voice_in_eof = 0; // voice in end of frame
+        // voice_in_frame = 0;
+        // voice_in_bof = 0; // voice in begining of frame
+        // voice_in_eof = 0; // voice in end of frame
 
         // Collect VAD data from voices_in_frame array.
         // voice_in_bof
@@ -241,17 +241,18 @@ void IAVoz_System_Task ( void * vParam ) {
         //     else {voice_visualization[sample] = ' ';}
         // }
 
-        // Print VAD data
-        // ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
-        // ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+        
        
-        // Invoke model only if it looks like we have a windowed keyword
+        // // Invoke model only if it looks like we have a windowed keyword
         // if (voice_in_frame < 49/3){continue;}
         // if (voice_in_eof > voice_in_frame/2) {continue;}
         // if (voice_in_bof > voice_in_frame/2) {continue;}
         // if (voice_in_bof != 0 && voice_in_eof == 0) {continue;}
         // if (voice_in_bof == 0 && voice_in_eof != 0) {continue;}
-        // if (STP < 50) {continue;}
+        // // if (STP < 50) {continue;}
+        // // // Print VAD data
+        // ESP_LOGI(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
+        // // ESP_LOGD(TAG, "Free heap in SPIRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
         for (int i = 0; i < ms->kFeatureElementCount; i++) {
             sys->model_input_buffer[i] = sys->fp->feature_data[i];
@@ -283,7 +284,7 @@ void IAVoz_System_Task ( void * vParam ) {
         }
 
         // To check model execution time
-        // printf("invoke time: %lld, populate time: %lld, total time: %lld\n", invoke_time/1000, populate_time/1000, (esp_timer_get_time() - process_start)/1000);
+        printf("invoke time: %lld, populate time: %lld, total time: %lld\n", invoke_time/1000, populate_time/1000, (esp_timer_get_time() - process_start)/1000);
 
     }
     vTaskDelete(NULL);

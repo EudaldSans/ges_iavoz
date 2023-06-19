@@ -32,8 +32,8 @@ constexpr int kAudioSampleFrequency = 16000;
 constexpr int kFeatureSliceSize = 40;
 constexpr int kFeatureSliceCount = 99;
 constexpr int kFeatureElementCount = (kFeatureSliceSize * kFeatureSliceCount);
-constexpr int kFeatureSliceStrideMs = 20;
-constexpr int kFeatureSliceDurationMs = 30;
+constexpr int kFeatureSliceStrideMs = 10;
+constexpr int kFeatureSliceDurationMs = 20;
 
 // Variables for the model's output categories.
 constexpr int kSilenceIndex = 0;
