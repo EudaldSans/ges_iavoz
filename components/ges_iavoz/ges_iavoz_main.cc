@@ -9,9 +9,14 @@
 #include "ges_iavoz_command_responder.h"
 #include "model.h"
 
+#include "xmfcc.h"
+
 #define MAX_STP_SAMPLES 10
 
 const char * TAG = "IAVOZ_SYS";
+
+q7_t *mfcc_buffer;
+q7_t *output;
 
 // constexpr int kTensorArenaSize = g_model_len;
 
@@ -111,6 +116,22 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
 
     sys->cb = cb;
 
+    int num_frames;
+    int num_mfcc_features;
+    int frame_len;
+    int frame_shift;
+    XMFCC *mfcc;
+
+    num_mfcc_features = 10;
+    num_frames = 49;
+    frame_len = ((int16_t)(kAudioSampleFrequency * 0.001 * 40));
+    frame_shift = ((int16_t)(kAudioSampleFrequency * 0.001 * 20));
+    int mfcc_dec_bits = 1;
+    // num_out_classes = nn->get_num_out_classes();
+
+    mfcc = new XMFCC(num_mfcc_features, frame_len, mfcc_dec_bits);
+    mfcc_buffer = new q7_t[num_frames*num_mfcc_features];
+
     ESP_LOGI(TAG, "Initializing RecognizeCommands");
     sys->recognizer = new RecognizeCommands(sys->error_reporter);
 
@@ -183,6 +204,7 @@ void IAVoz_System_Task ( void * vParam ) {
     int32_t previous_time = 0;
     float STP_buffer[MAX_STP_SAMPLES];
     uint8_t STP_position = 0;
+    int16_t audio_data[16000];
 
     for (;;) {
         const int32_t current_time = LatestAudioTimestamp(sys->ap);
@@ -215,17 +237,26 @@ void IAVoz_System_Task ( void * vParam ) {
             else {voice_visualization[sample] = ' ';}
         }
 
-        ESP_LOGD(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
-       
-        if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
-        if (voice_in_eof > voice_in_frame/2) {continue;}
-        if (voice_in_bof > voice_in_frame/2) {continue;}
-        if (STP < 50) {continue;}
+        // VAD print
+        // ESP_LOGD(TAG, "[%s] vif: %3d\t vib: %3d\t vie: %3d\t STP: %d", voice_visualization, voice_in_frame, voice_in_bof, voice_in_eof, STP);
+
+        for (int sample = 0; sample < sys->fp->number_of_frames; sample++) {
+            uint8_t pos = (sys->fp->current_frame_start + sample)%sys->fp->number_of_frames;
+            memcpy(audio_data, sys->fp->audio_samples[pos], 320 * sizeof(int16_t));
+        }
+
+
+        // VAD conditions
+        // if (voice_in_frame < sys->fp->ms->kFeatureSliceCount/3){continue;}
+        // if (voice_in_eof > voice_in_frame/2) {continue;}
+        // if (voice_in_bof > voice_in_frame/2) {continue;}
+        // if (STP < 50) {continue;}
 
         for (int i = 0; i < ms->kFeatureElementCount; i++) {
             sys->model_input_buffer[i] = sys->fp->feature_data[i];
         }
 
+        // Model invoke
         TfLiteStatus invoke_status = sys->interpreter->Invoke();
         if (invoke_status != kTfLiteOk ) { ESP_LOGE(TAG, "Interpeter failed");}
         
@@ -261,7 +292,7 @@ void IAVoz_System_Task ( void * vParam ) {
             sys->cb(found_command, STP);
             RespondToCommand(found_command);
         }
-
+    
     }
 
     vTaskDelete(NULL);

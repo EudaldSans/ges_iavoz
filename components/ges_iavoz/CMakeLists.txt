@@ -14,7 +14,7 @@ idf_component_register( SRCS
                             "ringbuf.c"
                         INCLUDE_DIRS "."
 
-                        REQUIRES "esp-nn" tflite-lib libfvad
+                        REQUIRES "esp-nn" tflite-lib libfvad "XMFCC"
                         PRIV_REQUIRES nvs_flash
                     )
 
