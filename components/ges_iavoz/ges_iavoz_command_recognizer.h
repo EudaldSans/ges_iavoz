@@ -22,7 +22,10 @@ limitations under the License.
 #include "model_settings.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 
+#include "esp_event.h"
+
 #include "ges_iavoz.h"
+#include "ges_events.h"
 
 // Partial implementation of std::dequeue, just providing the functionality
 // that's needed to keep a record of previous neural network results over a
@@ -143,7 +146,8 @@ class RecognizeCommands {
                                     const int32_t current_time_ms,
                                     IAVOZ_KEY_t* found_command, uint8_t* score,
                                     bool* is_new_command,
-                                    uint8_t* found_index);
+                                    uint8_t* found_index,
+                                    int32_t STP);
   // bool activation;
   
  private:

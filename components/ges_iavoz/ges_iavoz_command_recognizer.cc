@@ -45,7 +45,7 @@ RecognizeCommands::RecognizeCommands(tflite::ErrorReporter* error_reporter,
 TfLiteStatus RecognizeCommands::ProcessLatestResults(
             const TfLiteTensor* latest_results, const int32_t current_time_ms,
             IAVOZ_KEY_t* found_command, uint8_t* score, bool* is_new_command, 
-            uint8_t* found_index) {
+            uint8_t* found_index, int32_t STP) {
     
     if ((latest_results->dims->size != 2) || (latest_results->dims->data[0] != 1) || (latest_results->dims->data[1] != kCategoryCount)) {
         TF_LITE_REPORT_ERROR(error_reporter_,
@@ -126,6 +126,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
         time_since_last_top = current_time_ms - previous_top_label_time_;
     }
 
+    // COMENTAR
     std::cout << std::setprecision(2) << std::fixed;
     std::cout << "SCORES " << current_time_ms << "ms";
     for (int i = 0; i < kCategoryCount; ++i) 
@@ -135,6 +136,12 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(
     std::cout << std::endl;
 
     *is_new_command = false;
+
+    int32_t payload[1 + kCategoryCount];
+    payload[0] = STP;
+    memcpy(&payload[1], average_scores, kCategoryCount);
+
+    esp_event_post_to(events_conn_loop_h, EVENTS_CONN, EVENT_CONN_WEIGHTS_TRANSMISSION, payload, sizeof(payload), portMAX_DELAY);
 
     // If previous activation happened more than 2 seconds ago, reset and leave.
     if (time_since_last_top >= 2000 && activation) {

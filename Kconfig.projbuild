@@ -1,0 +1,118 @@
+menu "SIMON IAVOZ"
+    config IAVOZ_ENABLE
+        bool "Enable IAVOZ service"
+        default n
+
+    config IAVOZ_SYS_TASK_STACK_SIZE
+        depends on IAVOZ_ENABLE
+        int "Underlying IAVOZ system task stack size"
+        range 1024 32768
+        default 7168
+        help
+            The stack size of the IAVOZ's system management underlying task.
+		
+    config IAVOZ_SYS_TASK_PRIORITY
+        depends on IAVOZ_ENABLE
+        int "Underlying task priority"
+        range 3 25
+        default 5
+        help
+            The priority of the IAVOZ's system management underlying task.
+
+
+    config IAVOZ_MIC_TASK_STACK_SIZE
+        depends on IAVOZ_ENABLE
+        int "Underlying task stack size"
+        range 1024 32768
+        default 7168
+        help
+            The stack size of the microphone's management underlying task.
+		
+    config IAVOZ_MIC_TASK_PRIORITY
+        depends on IAVOZ_ENABLE
+        int "Underlying task priority"
+        range 3 25
+        default 5
+        help
+            The priority of the microphone's management underlying task.
+
+    config IAVOZ_MIC_I2S_NUM
+        depends on IAVOZ_ENABLE
+        int "I2S peripheral num"
+        range 0 1
+        default 1
+        help
+            The I2S peripheral to be used by the system.
+    
+    config IAVOZ_MIC_I2S_PIN_BCK
+        depends on IAVOZ_ENABLE
+        int "I2S clock pin"
+        range 0 40
+        default 13
+        help
+            The I2S pin used for clock signal.
+
+    config IAVOZ_MIC_I2S_PIN_WS
+        depends on IAVOZ_ENABLE
+        int "I2S word-select pin"
+        range 0 40
+        default 0
+        help
+            The I2S pin used for word-select signal.
+
+    config IAVOZ_MIC_I2S_PIN_DIN
+        depends on IAVOZ_ENABLE
+        int "I2S data pin"
+        range 0 40
+        default 22
+        help
+            The I2S pin used for data signal.
+
+endmenu
+
+
+menu "Connect configuration"
+
+    config ESP_WIFI_SSID
+        string "WiFi SSID"
+        default "MiFibra-D53F"
+        help 
+            SSID (network name) for the device to connect to.
+
+    config ESP_WIFI_PASSWORD
+        string "WiFi Password"
+        default "GSVCp2Ya"
+        help
+            WiFi password (WPA or WPA2) for the device to use.
+
+    config ESP_MAXIMUM_RETRY
+        int "Maximum retry"
+        default 5
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    choice ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
+        prompt "WiFi Scan auth mode threshold"
+        default ESP_WIFI_AUTH_OPEN
+        help
+            The weakest authmode to accept in the scan mode.
+
+        config ESP_WIFI_AUTH_OPEN
+            bool "OPEN"
+        config ESP_WIFI_AUTH_WEP
+            bool "WEP"
+        config ESP_WIFI_AUTH_WPA_PSK
+            bool "WPA PSK"
+        config ESP_WIFI_AUTH_WPA2_PSK
+            bool "WPA2 PSK"
+        config ESP_WIFI_AUTH_WPA_WPA2_PSK
+            bool "WPA/WPA2 PSK"
+        config ESP_WIFI_AUTH_WPA3_PSK
+            bool "WPA3 PSK"
+        config ESP_WIFI_AUTH_WPA2_WPA3_PSK
+            bool "WPA2/WPA3 PSK"
+        config ESP_WIFI_AUTH_WAPI_PSK
+            bool "WAPI PSK"
+    endchoice
+
+endmenu

@@ -34,6 +34,7 @@ const IAVOZ_KEY_t kCategoryLabels[kCategoryCount] = {
     IAVOZ_KEY_HEYLOLA,
     IAVOZ_KEY_APAGA,
     IAVOZ_KEY_ENCIENDE,
+    IAVOZ_KEY_NULL,
     IAVOZ_KEY_NULL
 };
 

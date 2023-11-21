@@ -13,6 +13,8 @@
 
 #include "tensorflow/lite/c/common.h"
 
+#include "ges_config.h"
+
 #define GES_IAVOZ_I2S_NUM   1
 #define GES_IAVOZ_PIN_BCK   27
 #define GES_IAVOZ_PIN_WS    26

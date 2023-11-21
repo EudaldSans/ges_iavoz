@@ -1,5 +1,8 @@
 #include "ges_iavoz_main.h"
 
+#include "ges_events.h"
+#include "ges_connect.h"
+
 #include <sys/_stdint.h>
 #include "ges_iavoz_audio_provider.h"
 
@@ -89,6 +92,12 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
 
     // Get information about the memory area to use for the model's input.
     sys->model_input = sys->interpreter->input(0);
+    
+    if (sys->model_input->dims->size != 2) {ESP_LOGE(TAG, "input dims are not 2");}
+    if (sys->model_input->dims->data[0] != 1) {ESP_LOGE(TAG, "input dim x != 1");}
+    if (sys->model_input->dims->data[1] != (sys->ms->kFeatureSliceCount * sys->ms->kFeatureSliceSize)) {ESP_LOGE(TAG, "input dims y != slice size %d", sys->ms->kFeatureSliceCount * sys->ms->kFeatureSliceSize);}
+    if (sys->model_input->type != kTfLiteInt8) {ESP_LOGE(TAG, "input type is not uint8_t");}
+
     if ((sys->model_input->dims->size != 2) || (sys->model_input->dims->data[0] != 1) || (sys->model_input->dims->data[1] != (sys->ms->kFeatureSliceCount * sys->ms->kFeatureSliceSize)) || (sys->model_input->type != kTfLiteInt8)) 
     {
         ESP_LOGE(TAG, "Bad input tensor parameters in model");
@@ -128,6 +137,9 @@ bool IAVoz_System_Init ( IAVoz_System_t ** sysptr, IAVoz_ModelSettings_t * ms, p
     sys->is_sys_started = false;
 
     initCommandResponder();
+
+    connect_init();
+    events_init();
 
     return true;
 }
@@ -271,7 +283,7 @@ void IAVoz_System_Task ( void * vParam ) {
 
         // Results processing, in this function we decide if voice is a valid keyword
         TfLiteStatus process_status = sys->recognizer->ProcessLatestResults(
-            output, current_time, &found_command, &score, &is_new_command, &found_index);
+            output, current_time, &found_command, &score, &is_new_command, &found_index, STP);
         if (process_status != kTfLiteOk) {
             ESP_LOGE(TAG, "RecognizeCommands::ProcessLatestResults() failed");
             return;
